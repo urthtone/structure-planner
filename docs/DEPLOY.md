@@ -29,9 +29,9 @@ Deployed public endpoint:
 `https://hilltop-planner-api-da467d.azurewebsites.net/api/analyze`.
 
 The upload ZIP built for this deployment already contains that endpoint.
-**XAI_API_KEY was absent from this executor's process environment and was not set
-in Azure.** The live API currently returns `not_configured`; supplying the key
-later does not require rebuilding the frontend.
+**XAI_API_KEY is now set securely in Function app settings.** A real synthetic-image
+request returned `200 / ok` with validated structured analysis. The key never
+enters the frontend build; future key changes do not require rebuilding it.
 
 Upload **the contents of `out/`**, including its hidden `.htaccess`, to
 **`public_html/planner/`**. If hilltopstructures.us has a different domain docroot,
@@ -119,8 +119,10 @@ including trigger synchronization and app health checks. Runtime code was packag
 with production dependencies using Node 22, without local settings/env files.
 
 Live OPTIONS returned 204 with the exact allowed origin; POST returned 200 with
-`status: not_configured`; a different origin was denied CORS. A real xAI image
-analysis was **not** attempted because the securely supplied key was absent.
+`status: not_configured`; a different origin was denied CORS. After secure key activation and a targeted Function restart, one real synthetic
+PNG analysis returned `200 / ok` with all structured fields validated. The initial
+pre-key `not_configured` result remains historical proof. No key, photos or
+analysis contents were printed or committed.
 The production browser tests additionally verify the compiled hosted endpoint is
 used only after the user clicks Analyze (mocked response, no AI credits spent).
 
@@ -214,12 +216,14 @@ The infrastructure exists. **Do not create duplicate resources or reapply the
 bootstrap template after setting a key:** its initial inline app-settings list
 would replace that collection and remove the key. See `infra/README.md`.
 
-When James's approved secure prompt makes XAI_API_KEY available in this process:
+The approved key activation is complete. For a future explicitly approved key
+update, supply XAI_API_KEY securely to a fresh login-shell environment and run:
 
 ```sh
 node scripts/set-xai-key.mjs
 # No-op if absent. If present, sends the key to this Function's app settings using
 # Azure CLI stdin; never prints it, puts it in argv, writes it locally or commits it.
+# The helper bridges Node's socket to a reopenable Python pipe; Python 3 is required.
 # The Function restarts automatically. Once ready, this makes ONE paid AI request:
 node scripts/smoke-azure-api.mjs \
   https://hilltop-planner-api-da467d.azurewebsites.net/api/analyze configured
@@ -227,7 +231,7 @@ node scripts/smoke-azure-api.mjs \
 
 Do not put the key into the frontend URL, source, `.env.local`, shell history,
 logs, or a command-line literal. `.azure/key-status.json` contains only a boolean
-and a nonsecret missing-key reason. The smoke script uses a synthetic 256-pixel
+(and a nonsecret reason when no environment value was supplied). The smoke script uses a synthetic 256-pixel
 PNG and validates structured output without logging photos or analysis contents.
 If Azure requires a fresh login, stop and complete the normal interactive/device
 login; never extract/reuse tokens or credentials through other means.

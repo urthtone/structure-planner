@@ -1,6 +1,6 @@
 # Planner Azure deployment record
 
-Status: Deployed. No-key API/CORS smoke verified; xAI key pending (not in process environment).
+Status: Deployed and verified. xAI key activated securely; real single-image structured result and CORS verified.
 Recipe: Azure CLI + native ARM template; Azure Prepare -> Azure Validate -> Azure Deploy completed.
 
 ## 1. Approval and scope
@@ -27,8 +27,10 @@ Explicit VISION_PROVIDER=xai; VISION_MODEL=grok-4.3; VISION_BASE_URL=https://api
 Input: 5 bounded images, 4.5 MB streamed body cap; 35-second provider timeout.
 Basic per-process IP throttling: 10 requests / 600 seconds, bounded buckets.
 This is not authentication, distributed DDoS protection or a hard spend cap.
-XAI_API_KEY absent from process environment; not set on Azure, never printed,
-written locally or committed. Live AI result testing is conditional/pending.
+XAI_API_KEY was supplied through a fresh login-shell environment and set only in
+Function app settings. It was never printed, written locally, placed in argv or
+committed. CLI name-only verification confirmed the setting exists. The Function
+was restarted to load the updated environment; real analysis then passed.
 
 ## 4. Deployment packaging
 
@@ -45,15 +47,17 @@ Compiled production package: /workspace/planner-function.zip, Node 22 dependenci
 Flex scales to zero; no always-ready baseline or optional telemetry resources.
 Storage, execution memory/time, networking and future xAI calls are separately
 billable. Max scale 40 and in-memory throttling are not budget caps. Current paid
-provider smoke calls: zero (key unavailable). Pricing references in docs/DEPLOY.md.
+provider successful smoke inferences: one (synthetic 256-pixel PNG). Pricing references in docs/DEPLOY.md.
 
 ## 6. Live smoke results
 
 OPTIONS: 204, Access-Control-Allow-Origin exactly https://hilltopstructures.us.
-POST with one synthetic small PNG: 200, status not_configured.
-Different origin denied CORS. No provider credits spent.
-Structured xAI response not live-tested: secure environment key absent.
-Evidence: .azure/smoke-unconfigured.json and .azure/deployed.json.
+Before key activation: POST 200, status not_configured (preserved historical proof).
+After activation/restart: POST 200, status ok, all structured fields validated.
+Different origin denied CORS in both cases. One successful xAI inference; the
+pre-restart not_configured request did not call the provider. No analysis contents
+or photos were logged. Evidence: .azure/smoke-configured.json, historical
+.azure/smoke-unconfigured.json, and .azure/deployed.json.
 
 ## 7. Validation proof — November 8, 2026 (CST)
 
@@ -67,7 +71,7 @@ Evidence: .azure/smoke-unconfigured.json and .azure/deployed.json.
 - Subscription policy list empty; actual ARM validation passed. Static/live role
   review: no managed identities/custom roles; shared-key storage configured in
   Azure; deployed host loads the published anonymous HTTP function successfully.
-- npm run lint; npm test: 17 frontend/engine + 12 Function tests passed.
+- npm run lint; npm test: 19 frontend/engine/tooling + 12 Function tests passed.
 - npm run build:api; isolated Node 22 Function tests/build passed.
 - Production-only Node 22 package installed; npm audit zero vulnerabilities;
   compiled handler loads and ZIP excludes env/local settings.
@@ -85,8 +89,8 @@ Evidence: .azure/smoke-unconfigured.json and .azure/deployed.json.
 
 ## 8. Remaining checks
 
-Secure xAI key activation + one real image result; production Apache headers and
-physical-phone install/camera behavior after the owner uploads the static files.
+Only production Apache headers and physical-phone install/camera behavior remain
+after the owner uploads the static files. Azure photo analysis is verified.
 No Bluehost login/upload performed. No fresh Azure login or resource blockers.
 
 ### Final code-only hardening
@@ -100,8 +104,27 @@ This does not change the documented trusted-proxy/distributed-limit caveats.
 
 ### Upload artifact
 
-/workspace/planner-upload.zip: 41 static files, 366383 bytes. Includes .htaccess
+/workspace/planner-upload.zip: 41 static files, 366369 bytes. Includes .htaccess
 at archive root, /planner-scoped shell and compiled live API URL; no out/ wrapper,
 provider key identifiers or local settings. ZIP CRC verified; sha256 and CST build
 time recorded in .azure/upload-artifact.json. Upload contents to the domain's
 planner/ directory. No Bluehost upload/access performed.
+
+### Secure key activation continuation — November 8, 2026 (CST)
+
+- A fresh bash login shell received XAI_API_KEY. Initial Node stdin transport failed
+  locally: its socket could not be reopened as /dev/stdin (ENXIO). No key appeared
+  in logs; only fixed diagnostic categories were reported.
+- Reproduced with a nonsecret fixture. Added two red/green transport regression
+  tests and a Python subprocess.PIPE bridge. Same Azure CLI, same scoped setting
+  operation; no REST/internal-API workaround or credentials/token inspection.
+- Key sent in an anonymous in-memory pipe, never in a file, argv, output or commit.
+  Azure CLI app-setting update succeeded; name-only check confirmed presence.
+- Immediate request reached an old worker and returned not_configured, spending
+  no provider credits. Targeted Function restart completed; no new resources.
+- 5:44 PM CST: live configured smoke passed: OPTIONS 204, POST 200/status ok,
+  strict structured JSON validated, unrelated origin denied. One successful
+  provider inference. Runtime/provider remain Node 22/xAI/grok-4.3.
+- Fresh lint, 31 unit tests (19 frontend/tooling + 12 Function), Function build,
+  Node 22 Function tests, 4 workflow browser tests, static export and 2 production
+  PWA tests passed. Fresh export uses the unchanged live endpoint.
