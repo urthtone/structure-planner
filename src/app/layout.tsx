@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,9 +12,20 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#b45309",
+};
+
 export const metadata: Metadata = {
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Planner" },
+  icons: { apple: "/icons/apple-touch-icon.png", icon: "/icons/icon-192.png" },
   title: "Structure Planner",
-  description: "AI-powered plans for sheds, decks, cabins, and garages from photos and questions",
+  description:
+    "AI-powered plans for sheds, decks, cabins, and garages from photos and questions",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

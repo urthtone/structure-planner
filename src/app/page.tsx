@@ -15,6 +15,7 @@ import {
 } from "../lib/planning";
 import { compressImage, MAX_PHOTOS, selectImageFiles } from "../lib/photos";
 import { parseAnalysis, type PhotoAnalysis } from "../lib/analysis";
+import { PwaControls } from "../components/PwaControls";
 import { FloorPlan } from "../components/FloorPlan";
 
 const money = (n: number) =>
@@ -88,7 +89,9 @@ export default function Home() {
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ images: photos }),
         signal: AbortSignal.timeout(40_000),
       });
@@ -182,6 +185,7 @@ export default function Home() {
         <span>Sheds · Decks · Cabins · Garages</span>
       </header>
       <main>
+        <PwaControls />
         <nav aria-label="Progress" className="progress no-print">
           {["Photos", "Structure", "Prices & notes", "Your plan"].map(
             (label, index) => (
@@ -231,6 +235,7 @@ export default function Home() {
                 aria-label="Upload photos"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
+                capture="environment"
                 multiple
                 disabled={uploading || photos.length === MAX_PHOTOS}
                 onChange={(event) => {

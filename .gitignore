@@ -44,3 +44,5 @@ next-env.d.ts
 /playwright-report/
 
 !.env.example
+
+/public/sw.js
