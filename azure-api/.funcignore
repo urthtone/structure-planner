@@ -1,0 +1,6 @@
+local.settings*.json
+.env*
+src/
+test/
+tsconfig.json
+.git*

@@ -13,7 +13,7 @@ self.addEventListener("activate", (event) => {
         Promise.all(
           keys
             .filter(
-              (key) => key.startsWith("structure-planner-") && key !== CACHE,
+              (key) => key.startsWith("structure-planner-planner-") && key !== CACHE,
             )
             .map((key) => caches.delete(key)),
         ),
@@ -29,16 +29,17 @@ self.addEventListener("fetch", (event) => {
     request.headers.has("authorization") ||
     url.origin !== self.location.origin ||
     url.pathname.startsWith("/api/") ||
+    url.pathname.startsWith("/planner/api/") ||
     url.pathname.startsWith("/redirect") ||
     url.search
   )
     return;
-  if (request.mode === "navigate" && url.pathname === "/") {
+  if (request.mode === "navigate" && url.pathname === "/planner/") {
     event.respondWith(
       fetch(request).catch(() =>
         caches
           .open(CACHE)
-          .then((cache) => cache.match("/"))
+          .then((cache) => cache.match("/planner/"))
           .then((response) => response || Response.error()),
       ),
     );

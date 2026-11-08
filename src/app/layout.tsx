@@ -20,9 +20,12 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  manifest: "/manifest.webmanifest",
+  manifest: "/planner/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Planner" },
-  icons: { apple: "/icons/apple-touch-icon.png", icon: "/icons/icon-192.png" },
+  icons: {
+    apple: "/planner/icons/apple-touch-icon.png",
+    icon: "/planner/icons/icon-192.png",
+  },
   title: "Structure Planner",
   description:
     "AI-powered plans for sheds, decks, cabins, and garages from photos and questions",

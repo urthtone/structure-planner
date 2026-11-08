@@ -46,3 +46,10 @@ next-env.d.ts
 !.env.example
 
 /public/sw.js
+
+# Standalone Azure Function secrets and build outputs
+/azure-api/node_modules/
+/azure-api/dist/
+/azure-api/local.settings.json
+/azure-api/local.settings.*.json
+!/azure-api/local.settings.example.json

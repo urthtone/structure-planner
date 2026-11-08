@@ -4,10 +4,22 @@ test("installable manifest, mobile layout, camera input and offline reload work"
   context,
   request,
 }) => {
-  await page.goto("/");
-  const manifest = await request.get("/manifest.webmanifest");
+  const errors: string[]=[];
+  page.on("pageerror",error=>errors.push(error.message));
+  await page.goto("/planner/");
+  const session=await context.newCDPSession(page);
+  const browserManifest=await session.send("Page.getAppManifest");
+  expect(browserManifest.errors).toEqual([]);
+  expect(browserManifest.url).toContain("/planner/manifest.webmanifest");
+  // A second CDP session can override Chromium's network emulation. Release it
+  // before Playwright switches the page offline, so navigator.onLine is accurate.
+  await session.detach();
+  expect((await request.post("/planner/api/analyze",{data:{images:[]}})).status()).toBe(404);
+  const manifest = await request.get("/planner/manifest.webmanifest");
   expect(manifest.status()).toBe(200);
   const data = await manifest.json();
+  expect(data.start_url).toBe("/planner/");
+  expect(data.scope).toBe("/planner/");
   expect(data.display).toBe("standalone");
   expect(data.icons.length).toBeGreaterThanOrEqual(3);
   for (const icon of data.icons)
@@ -24,11 +36,14 @@ test("installable manifest, mobile layout, camera input and offline reload work"
     await navigator.serviceWorker.ready;
   });
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  const registration = await page.evaluate(async () => (await navigator.serviceWorker.ready).scope);
+  expect(new URL(registration).pathname).toBe("/planner/");
   await context.setOffline(true);
   await page.reload();
   await expect(
     page.getByRole("heading", { name: "Upload photos" }),
   ).toBeVisible();
+  expect(await page.evaluate(()=>navigator.onLine)).toBe(false);
   await expect(page.getByRole("status")).toContainText("Offline");
   await page.getByRole("button", { name: "Next: structure" }).click();
   await page.getByRole("button", { name: "Next: prices" }).click();
@@ -54,6 +69,8 @@ test("installable manifest, mobile layout, camera input and offline reload work"
   expect(
     cached.some((url) => url.includes("/api/") || url.includes("/redirect")),
   ).toBe(false);
+  expect(errors).toEqual([]);
+  expect(cached.every(url=>new URL(url).pathname.startsWith("/planner/"))).toBe(true);
   await page.screenshot({
     path: "test-results/mobile-offline.png",
     fullPage: true,

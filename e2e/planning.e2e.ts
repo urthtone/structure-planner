@@ -12,20 +12,13 @@ async function raster(page: import("@playwright/test").Page) {
   });
 }
 
-test("page and unconfigured API respond; invalid payloads are rejected", async ({
-  request,
-}) => {
-  const page = await request.get("/");
-  expect(page.status()).toBe(200);
-  expect(await page.text()).toContain("Structure Planner");
-  const result = await request.post("/api/analyze", {
-    data: { images: ["data:image/jpeg;base64,/9j/"] },
-  });
-  expect(result.status()).toBe(200);
-  expect((await result.json()).status).toBe("not_configured");
-  expect(
-    (await request.post("/api/analyze", { data: { images: [] } })).status(),
-  ).toBe(400);
+test("exported page responds and contains only subpath assets", async ({request}) => {
+  const response = await request.get("/planner/");
+  expect(response.status()).toBe(200);
+  const html=await response.text();
+  expect(html).toContain("Structure Planner");
+  expect(html).toContain("/planner/_next/static/");
+  expect(html).not.toMatch(/(?:src|href)="\/_next\//);
 });
 
 test("photo picker/drop cap, compression, rejection, removal and manual planning", async ({
@@ -33,7 +26,7 @@ test("photo picker/drop cap, compression, rejection, removal and manual planning
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/planner/");
   const buffer = Buffer.from(await raster(page), "base64");
   await page.getByLabel("Upload photos", { exact: true }).setInputFiles(
     Array.from({ length: 6 }, (_, i) => ({
@@ -80,6 +73,7 @@ test("photo picker/drop cap, compression, rejection, removal and manual planning
     );
   }, buffer.toString("base64"));
   await expect(page.locator(".count")).toHaveText("5/5");
+  await page.route("https://analysis.example.test/api/analyze", route => route.fulfill({json:{status:"not_configured",message:"Photo analysis not configured"}}));
   await page
     .getByRole("button", { name: "Analyze photos", exact: true })
     .click();
@@ -114,7 +108,7 @@ test("photo picker/drop cap, compression, rejection, removal and manual planning
 test("photo suggestions are optional and user-overridable", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/planner/");
   const buffer = Buffer.from(await raster(page), "base64");
   await page
     .getByLabel("Upload photos", { exact: true })
@@ -166,7 +160,7 @@ test("photo suggestions are optional and user-overridable", async ({
 test("failed decode and concurrent drops do not stall intake or exceed the cap", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/planner/");
   const buffer = Buffer.from(await raster(page), "base64");
   await page.getByLabel("Upload photos", { exact: true }).setInputFiles([
     {

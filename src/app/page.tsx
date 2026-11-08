@@ -14,7 +14,8 @@ import {
   type StructureType,
 } from "../lib/planning";
 import { compressImage, MAX_PHOTOS, selectImageFiles } from "../lib/photos";
-import { parseAnalysis, type PhotoAnalysis } from "../lib/analysis";
+import type { PhotoAnalysis } from "../lib/analysis";
+import { requestAnalysis } from "../lib/analyze-client";
 import { PwaControls } from "../components/PwaControls";
 import { FloorPlan } from "../components/FloorPlan";
 
@@ -87,18 +88,13 @@ export default function Home() {
     setAnalysisMessage("");
     const version = photoVersion.current;
     try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ images: photos }),
-        signal: AbortSignal.timeout(40_000),
-      });
-      const data = await response.json();
+      const data = await requestAnalysis(
+        photos,
+        process.env.NEXT_PUBLIC_ANALYZE_URL,
+      );
       if (version !== photoVersion.current) return;
-      if (response.ok && data.status === "ok") {
-        setAnalysis(parseAnalysis(data.analysis));
+      if (data.status === "ok") {
+        setAnalysis(data.analysis);
         setAnalysisMessage(
           "Tentative photo observations — verify on site. Suggestions never override your choices automatically.",
         );

@@ -10,6 +10,8 @@ npm run build
 npm start
 ```
 
+Open http://127.0.0.1:3102/planner/ locally. Production is https://hilltopstructures.us/planner/.
+
 Use an HTTPS host for production (localhost works for development). Open the site once while online:
 
 - Android / Chrome / Edge: use **Install Structure Planner** when offered, or the browser's Install/Add to Home Screen menu.
@@ -23,7 +25,7 @@ After a successful online production visit and service-worker installation, the 
 
 **Photos, notes and price edits are memory-only; reloading clears them.** This is not a saved-project database. No user project data, photos, API responses, POST requests, bearer tokens, foreign URLs or query-bearing requests are stored by the worker. Only the public HTML/JS/CSS/font/icon shell is precached.
 
-`npm run build` runs `scripts/build-sw.mjs` after Next.js builds, generating `public/sw.js` from that build's actual static assets. This generated file is ignored by Git. Deploy the generated worker alongside the corresponding `.next` and `public` files. `next.config.ts` gives the worker no-cache headers so browsers check for updates. Do not serve it with an immutable CDN cache policy.
+`npm run build` runs `scripts/build-sw.mjs` after Next.js builds, generating `out/sw.js` from that build's actual static assets. This generated file is ignored by Git. Upload all `out/` contents, including `.htaccess`, into the domain's `planner/` folder. The manifest, icons, worker and cache paths are scoped to `/planner/`; `.htaccess` gives the worker no-cache headers so browsers check for updates. Do not serve it with an immutable CDN cache policy.
 
 The cache name includes the build ID. A new version waits until old windows close rather than forcibly reloading and destroying a plan in progress. Close the app's old tabs/windows and reopen to update. Old caches owned by this app are removed on activation; unrelated site caches are untouched.
 
@@ -37,11 +39,12 @@ Print/PDF still uses the browser's print dialog. Mobile browsers vary in how the
 
 ## API caveat
 
-The `/api/analyze` server route is unchanged from the planning-engine branch. It has no account system or rate limiter. Before publicly hosting it with a paid vision API key, add appropriate gateway authentication, rate/spending limits and privacy guidance. The PWA does not make this server endpoint available offline and does not put the provider key in its JavaScript bundle. No Azure integration is included.
+Photo analysis is a separate Azure Function configured through public build-time `NEXT_PUBLIC_ANALYZE_URL`, not a Next server route or something Bluehost runs. The API has bounded input, exact-origin CORS and best-effort process-local rate limiting; these are not authentication or distributed abuse/spending protection. Provider keys belong only in Function settings. Leave the frontend endpoint blank for a fully manual/offline-capable planner. See [DEPLOY.md](DEPLOY.md) for setup and launch caveats.
 
 ## Verification
 
 ```sh
+npm --prefix azure-api ci
 npm run lint
 npm test
 npm run test:e2e

@@ -9,8 +9,8 @@ export default defineConfig({
     viewport: { width: 390, height: 844 },
   },
   webServer: {
-    command: "npm start -- --hostname 127.0.0.1 --port 3102",
-    url: "http://127.0.0.1:3102",
+    command: "npm start",
+    url: "http://127.0.0.1:3102/planner/",
     reuseExistingServer: false,
     timeout: 120000,
     env: {

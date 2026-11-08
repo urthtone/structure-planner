@@ -1,0 +1,17 @@
+{
+  "IsEncrypted":false,
+  "Values": {
+    "AzureWebJobsStorage":"UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME":"node",
+    "FUNCTIONS_REQUEST_BODY_SIZE_LIMIT":"4500000",
+    "XAI_API_KEY":"",
+    "VISION_MODEL":"grok-4.3",
+    "ALLOWED_ORIGINS":"https://hilltopstructures.us,http://localhost:3000,http://127.0.0.1:3102",
+    "REQUIRE_ORIGIN":"true",
+    "RATE_LIMIT_MAX":"10",
+    "RATE_LIMIT_WINDOW_SECONDS":"600",
+    "ANALYZE_REQUIRE_FUNCTION_KEY":"false",
+    "ANALYZE_SHARED_KEY":""
+  },
+  "Host":{"CORS":"http://localhost:3000,http://127.0.0.1:3102","CORSCredentials":false}
+}

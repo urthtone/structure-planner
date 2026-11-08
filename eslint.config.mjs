@@ -10,6 +10,7 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
+    "azure-api/dist/**",
     "public/sw.js",
     "test-results/**",
     "build/**",

@@ -10,25 +10,25 @@ async function walk(directory) {
   return result;
 }
 const buildId = (await readFile(".next/BUILD_ID", "utf8")).trim();
-const staticFiles = (await walk(".next/static")).map(
+const staticFiles = (await walk("out/_next/static")).map(
   (file) =>
-    "/_next/static/" +
-    path.relative(".next/static", file).split(path.sep).join("/"),
+    "/planner/_next/static/" +
+    path.relative("out/_next/static", file).split(path.sep).join("/"),
 );
 const assets = [
-  "/",
-  "/manifest.webmanifest",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/maskable-512.png",
-  "/icons/apple-touch-icon.png",
+  "/planner/",
+  "/planner/manifest.webmanifest",
+  "/planner/icons/icon-192.png",
+  "/planner/icons/icon-512.png",
+  "/planner/icons/maskable-512.png",
+  "/planner/icons/apple-touch-icon.png",
   ...staticFiles,
 ].sort();
 const template = await readFile("scripts/sw-template.js", "utf8");
 await writeFile(
-  "public/sw.js",
+  "out/sw.js",
   template
-    .replace("__CACHE_NAME__", JSON.stringify(`structure-planner-${buildId}`))
+    .replace("__CACHE_NAME__", JSON.stringify(`structure-planner-planner-${buildId}`))
     .replace("__PRECACHE_ASSETS__", JSON.stringify(assets)),
 );
 console.log(

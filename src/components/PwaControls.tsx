@@ -20,7 +20,7 @@ export function PwaControls() {
     // Production only: never let a development build poison the offline cache.
     if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
       void navigator.serviceWorker
-        .register("/sw.js")
+        .register("/planner/sw.js", { scope: "/planner/", updateViaCache: "none" })
         .catch(() =>
           setMessage("Offline installation is unavailable in this browser."),
         );

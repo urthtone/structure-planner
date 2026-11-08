@@ -6,10 +6,11 @@ A Next.js 16 / React 19 app for preliminary shed, deck, cabin and garage shell p
 
 ```sh
 npm install
+npm --prefix azure-api install
 npm run dev
 ```
 
-Open http://localhost:3000. `npm test`, `npm run lint`, and `npm run build` verify the project. Browser smoke tests: `npx playwright install chromium` then `npm run test:e2e` (starts and stops a local dev server on port 3100, with provider keys disabled). Use `npm start` after a production build.
+Open http://localhost:3000/planner/. `npm test`, `npm run lint`, and `npm run build` verify the project. Browser smoke tests: `npx playwright install chromium` then `npm run test:e2e` (starts and stops a local dev server on port 3100, with provider keys disabled). Use `npm start` after a production build to preview static `out/` at http://127.0.0.1:3102/planner/. Function dependencies are installed separately; `npm run build:api` compiles them.
 
 ## Planning workflow
 
@@ -20,16 +21,25 @@ Open http://localhost:3000. `npm test`, `npm run lint`, and `npm run build` veri
 
 ## Optional photo analysis
 
-Copy `.env.example` to `.env.local`, set `XAI_API_KEY` or `OPENAI_API_KEY`, and restart. Keys stay on the server: never use `NEXT_PUBLIC_` variables for credentials or commit `.env.local`.
+The frontend is a **static export** for `https://hilltopstructures.us/planner/`;
+there is no Next.js API route. Copy `.env.example` to `.env.local` and set only the
+public build-time `NEXT_PUBLIC_ANALYZE_URL` after deploying the separate
+**Azure Functions Node 22 v4** app in `azure-api/`. If the URL is blank, analysis
+clearly reports "not configured" and the complete manual planner still works.
 
-- XAI default: `https://api.x.ai/v1`, model `grok-4`.
-- OpenAI default: `https://api.openai.com/v1`, model `gpt-4o`.
-- Override model with `VISION_MODEL` (must support vision and JSON response format).
-- Override an OpenAI-compatible HTTPS API base with `VISION_BASE_URL`.
+Set **`XAI_API_KEY` only in Function app settings**, never in the frontend.
+xAI is the default provider (`https://api.x.ai/v1/responses`, vision model
+`grok-4.3`, overridable using `VISION_MODEL`). Optional OpenAI is selected only if
+an OpenAI key is set and the xAI key is absent. Clicking **Analyze photos** sends
+up to five compressed images; selection alone sends nothing. Validated visual
+observations/suggestions remain uncertain and user-overridable, not construction
+approval. No project database is included.
 
-Click **Analyze photos** to explicitly send the compressed images to the configured provider. Photos are not sent merely by selecting them. The route accepts no more than five bounded image data URLs and validates the model's JSON. It returns observations for slope, visible ground, obstructions, sun/shade, style, foundation suggestion and notes. These are uncertain visual observations, not surveys or soil/load determinations. Foundation suggestions require clicking **Use suggestion** and remain editable. Provider failures and absent configuration are explained without disabling planning. Nothing is persisted to a database.
-
-**Deployment security:** `/api/analyze` spends the server's configured API credits. Before exposing a keyed deployment publicly, add authentication, rate limits and provider spending limits at your hosting gateway; the sample has no user/accounts system. Image requests are capped at 4.5 MB, each at 650 KB, with a 35-second provider timeout. Avoid photos containing private information. No provider keys are returned to the browser.
+See **[DEPLOY.md](docs/DEPLOY.md)** for exact Bluehost `out/` upload instructions,
+Azure settings/manual deployment commands, CORS, pricing references and the
+best-effort in-memory rate limiter's important limitations. CORS is not auth;
+provider spending and gateway abuse protection require launch review. No secrets,
+Azure resources or deployments are included in this repository.
 
 ## Calculation assumptions and limits
 

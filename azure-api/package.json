@@ -1,0 +1,22 @@
+{
+  "name": "structure-planner-analysis-api",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/functions.js",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run test",
+    "start": "npm run build && func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5",
+    "vitest": "^4.0.0"
+  }
+}
