@@ -24,3 +24,393 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+:root {
+  color-scheme: light;
+}
+body {
+  margin: 0;
+  background: #f5f6f8;
+  color: #172033;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+}
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  font-weight: 700;
+  margin: 0 0 0.6rem;
+}
+h1 {
+  font-size: 1.35rem;
+}
+h2 {
+  font-size: 1.8rem;
+}
+h3 {
+  font-size: 1.1rem;
+}
+p {
+  margin: 0.5rem 0;
+}
+small {
+  color: #596579;
+  font-size: 0.82rem;
+}
+.app-header {
+  background: #fff;
+  border-bottom: 1px solid #dce1e8;
+  padding: 1.2rem max(1.25rem, calc((100vw - 1080px) / 2));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+.app-header p,
+.app-header > span {
+  font-size: 0.85rem;
+  color: #596579;
+}
+main {
+  max-width: 1080px;
+  padding: 2rem 1.25rem;
+  margin: auto;
+}
+.progress {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  font-size: 0.85rem;
+}
+.progress span {
+  flex: 1;
+  border-top: 4px solid #dce1e8;
+  padding-top: 0.5rem;
+}
+.progress .active {
+  border-color: #b45309;
+  font-weight: 700;
+}
+.panel {
+  background: #fff;
+  border: 1px solid #dce1e8;
+  border-radius: 14px;
+  padding: 1.75rem;
+}
+.stack > * + * {
+  margin-top: 1.25rem;
+}
+.eyebrow {
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.count {
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 20px;
+  padding: 0.25rem 0.6rem;
+  font-size: 1rem;
+}
+button {
+  background: #b45309;
+  color: #fff;
+  border: 1px solid #b45309;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:hover {
+  filter: brightness(0.94);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button.secondary {
+  background: #fff;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+button.selected {
+  background: #fff7ed;
+  color: #92400e;
+  border-color: #b45309;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 3px solid #0284c7;
+  outline-offset: 3px;
+}
+.type-grid,
+.field-grid,
+.price-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.type-grid {
+  grid-template-columns: repeat(4, 1fr);
+  text-transform: capitalize;
+}
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+input,
+select,
+textarea {
+  display: block;
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 0.6rem;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+  font-weight: 400;
+  box-sizing: border-box;
+}
+.check {
+  flex-direction: row;
+  align-items: center;
+}
+input[type="checkbox"] {
+  width: auto;
+}
+.drop-zone {
+  border: 2px dashed #aebaca;
+  border-radius: 12px;
+  align-items: center;
+  padding: 2.5rem 1rem;
+  background: #fafbfc;
+  text-align: center;
+}
+.drop-zone input {
+  max-width: 380px;
+}
+.drop-zone span {
+  color: #596579;
+  font-weight: 400;
+}
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.photo-grid img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+.photo-grid figure {
+  margin: 0;
+}
+.actions,
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+.title-row {
+  justify-content: space-between;
+}
+.notice {
+  background: #fff8e8;
+  border: 1px solid #f0d59c;
+  border-radius: 9px;
+  padding: 1rem;
+  font-size: 0.9rem;
+}
+.error {
+  background: #fff1f2;
+  color: #9f1239;
+  padding: 1rem;
+  border: 1px solid #fda4af;
+  border-radius: 8px;
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+.floor-plan {
+  width: 100%;
+  max-height: 540px;
+  color: #172033;
+  fill: currentColor;
+}
+dl {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 0.4rem 1rem;
+  font-size: 0.9rem;
+}
+dt {
+  color: #596579;
+}
+dd {
+  margin: 0;
+}
+.estimate {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #92400e;
+}
+.estimate small {
+  display: block;
+  font-weight: 400;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+th,
+td {
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.65rem 0.4rem;
+}
+th {
+  background: #f8fafc;
+}
+td:first-child {
+  min-width: 180px;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+ul,
+ol {
+  padding-left: 1.4rem;
+}
+ol {
+  list-style: decimal;
+}
+ul {
+  list-style: disc;
+}
+li + li {
+  margin-top: 0.65rem;
+}
+.preserve-lines {
+  white-space: pre-wrap;
+}
+footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #596579;
+  padding: 1.5rem;
+}
+@media (max-width: 700px) {
+  .field-grid,
+  .price-grid,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+  .type-grid,
+  .photo-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .app-header > span {
+    display: none;
+  }
+  .panel {
+    padding: 1.15rem;
+  }
+  .progress {
+    gap: 0.5rem;
+    font-size: 0.72rem;
+  }
+}
+@media print {
+  @page {
+    margin: 0.6in;
+  }
+  body {
+    background: white;
+    color: #000;
+    font-size: 10pt;
+  }
+  main {
+    max-width: none;
+    padding: 0;
+  }
+  .no-print,
+  button,
+  footer,
+  .app-header > span {
+    display: none !important;
+  }
+  .app-header {
+    padding: 0 0 1rem;
+    background: white;
+  }
+  .app-header p {
+    display: none;
+  }
+  .panel {
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+  }
+  .summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .floor-plan {
+    max-height: 350px;
+  }
+  .notice {
+    border-color: #999;
+    background: white;
+  }
+  .table-scroll {
+    overflow: visible;
+  }
+  table {
+    font-size: 9pt;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr {
+    break-inside: avoid;
+  }
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+  .stack > * + * {
+    margin-top: 1rem;
+  }
+  .estimate {
+    color: #000;
+  }
+}
+
+@media print {
+  /* Show the total only after the last material row, not on every page. */
+  tfoot {
+    display: table-row-group;
+  }
+}
