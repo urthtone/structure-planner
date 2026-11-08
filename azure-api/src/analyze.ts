@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
+import { isIP } from 'node:net';
 import type { HttpResponseInit } from '@azure/functions';
 import { parseAnalysis } from './contract';
 
@@ -83,6 +84,22 @@ function responseText(result: unknown, xai: boolean): string {
   throw new Error('Missing provider output.');
 }
 
+// App Service/proxies can append a source port. It must not create a fresh
+// quota bucket for each TCP connection. Canonicalize IPv6 spellings as well.
+function requestIp(forwarded: string | null): string {
+  let address=forwarded?.split(',').at(-1)?.trim().slice(0,128) || '';
+  const bracketed=address.match(/^\[([^\]]+)\](?::\d+)?$/);
+  if(bracketed) address=bracketed[1];
+  else if(/^[\d.]+:\d+$/.test(address)) address=address.slice(0,address.lastIndexOf(':'));
+  const family=isIP(address);
+  if(!family) return 'unknown';
+  if(family===6) {
+    try {return new URL(`http://[${address}]/`).hostname.slice(1,-1);}
+    catch {return 'unknown';}
+  }
+  return address;
+}
+
 /** Best-effort process-local limiter, not distributed auth/DDoS protection. See DEPLOY.md. */
 export function createAnalyzeHandler(options: { env?: Environment; fetcher?: typeof fetch; now?: () => number } = {}) {
   const env = options.env ?? process.env;
@@ -128,7 +145,7 @@ export function createAnalyzeHandler(options: { env?: Environment; fetcher?: typ
     }
     // Trust only the last proxy-appended hop, not the caller-controlled first entry.
     // Verify ingress header behavior before deployment; unidentified callers share a bucket.
-    const ip = request.headers.get('x-forwarded-for')?.split(',').at(-1)?.trim().slice(0,128) || 'unknown';
+    const ip = requestIp(request.headers.get('x-forwarded-for'));
     const prior = buckets.get(ip);
     const bucket = prior && time < prior.expires ? prior : {count:0,expires:time+windowMs};
     if (bucket.count >= maxRequests || (!prior && buckets.size >= 10000)) {
@@ -147,8 +164,11 @@ export function createAnalyzeHandler(options: { env?: Environment; fetcher?: typ
     } catch {
       return reply({status:'error',message:'Send 1–5 JPEG/PNG/WebP/GIF data URLs, each under 650 KB; total request under 4.5 MB.'},400);
     }
-    const xai = !!env.XAI_API_KEY;
-    const key = env.XAI_API_KEY || env.OPENAI_API_KEY;
+    if (env.VISION_PROVIDER && !['xai','openai','auto'].includes(env.VISION_PROVIDER))
+      return reply({status:'error',message:'Invalid photo-analysis provider configuration.'},503);
+    const automatic = !env.VISION_PROVIDER || env.VISION_PROVIDER === 'auto';
+    const xai = automatic ? !!env.XAI_API_KEY : env.VISION_PROVIDER === 'xai';
+    const key = xai ? env.XAI_API_KEY : env.OPENAI_API_KEY;
     if (!key) return reply({status:'not_configured',message:'Photo analysis not configured. Set XAI_API_KEY on the Function app; manual planning remains available.'});
     if (xai && images.some(image => !/^data:image\/(jpeg|png);/.test(image)))
       return reply({status:'error',message:'xAI requires JPEG or PNG. Upload through the planner to compress other raster formats to JPEG.'},400);

@@ -1,0 +1,216 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceGroupName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "functionAppName": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "functionPlanName": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "hilltop-planner-resources",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups',parameters('resourceGroupName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "parameters": {
+          "resourceGroupName": {
+            "value": "[parameters('resourceGroupName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "functionAppName": {
+            "value": "[parameters('functionAppName')]"
+          },
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "functionPlanName": {
+            "value": "[parameters('functionPlanName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "resourceGroupName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "functionAppName": {
+              "type": "string"
+            },
+            "storageAccountName": {
+              "type": "string"
+            },
+            "functionPlanName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "allowBlobPublicAccess": false,
+                "minimumTlsVersion": "TLS1_2"
+              }
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/default/deployments', parameters('storageAccountName'))]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+              ],
+              "properties": {
+                "publicAccess": "None"
+              }
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2024-04-01",
+              "name": "[parameters('functionPlanName')]",
+              "location": "[parameters('location')]",
+              "kind": "functionapp",
+              "sku": {
+                "name": "FC1",
+                "tier": "FlexConsumption"
+              },
+              "properties": {
+                "reserved": true
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2024-04-01",
+              "name": "[parameters('functionAppName')]",
+              "location": "[parameters('location')]",
+              "kind": "functionapp,linux",
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('functionPlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', 'deployments')]"
+              ],
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('functionPlanName'))]",
+                "httpsOnly": true,
+                "functionAppConfig": {
+                  "runtime": {
+                    "name": "node",
+                    "version": "22"
+                  },
+                  "scaleAndConcurrency": {
+                    "maximumInstanceCount": 40,
+                    "instanceMemoryMB": 512,
+                    "alwaysReady": []
+                  },
+                  "deployment": {
+                    "storage": {
+                      "type": "blobContainer",
+                      "value": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-05-01').primaryEndpoints.blob, 'deployments')]",
+                      "authentication": {
+                        "type": "StorageAccountConnectionString",
+                        "storageAccountConnectionStringName": "DEPLOYMENT_STORAGE_CONNECTION_STRING"
+                      }
+                    }
+                  }
+                },
+                "siteConfig": {
+                  "appSettings": [
+                    {
+                      "name": "AzureWebJobsStorage",
+                      "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-05-01').keys[0].value, ';EndpointSuffix=', environment().suffixes.storage)]"
+                    },
+                    {
+                      "name": "DEPLOYMENT_STORAGE_CONNECTION_STRING",
+                      "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-05-01').keys[0].value, ';EndpointSuffix=', environment().suffixes.storage)]"
+                    },
+                    {
+                      "name": "VISION_PROVIDER",
+                      "value": "xai"
+                    },
+                    {
+                      "name": "VISION_MODEL",
+                      "value": "grok-4.3"
+                    },
+                    {
+                      "name": "VISION_BASE_URL",
+                      "value": "https://api.x.ai/v1"
+                    },
+                    {
+                      "name": "ALLOWED_ORIGINS",
+                      "value": "https://hilltopstructures.us"
+                    },
+                    {
+                      "name": "REQUIRE_ORIGIN",
+                      "value": "true"
+                    },
+                    {
+                      "name": "FUNCTIONS_REQUEST_BODY_SIZE_LIMIT",
+                      "value": "4500000"
+                    },
+                    {
+                      "name": "RATE_LIMIT_MAX",
+                      "value": "10"
+                    },
+                    {
+                      "name": "RATE_LIMIT_WINDOW_SECONDS",
+                      "value": "600"
+                    },
+                    {
+                      "name": "ANALYZE_REQUIRE_FUNCTION_KEY",
+                      "value": "false"
+                    }
+                  ],
+                  "cors": {
+                    "allowedOrigins": [
+                      "https://hilltopstructures.us"
+                    ],
+                    "supportCredentials": false
+                  },
+                  "minTlsVersion": "1.2"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

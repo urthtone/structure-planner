@@ -29,8 +29,8 @@ clearly reports "not configured" and the complete manual planner still works.
 
 Set **`XAI_API_KEY` only in Function app settings**, never in the frontend.
 xAI is the default provider (`https://api.x.ai/v1/responses`, vision model
-`grok-4.3`, overridable using `VISION_MODEL`). Optional OpenAI is selected only if
-an OpenAI key is set and the xAI key is absent. Clicking **Analyze photos** sends
+`grok-4.3`, overridable using `VISION_MODEL`). Production selects xAI explicitly through `VISION_PROVIDER=xai`. Optional OpenAI
+can be selected explicitly, or in auto mode only when the xAI key is absent. Clicking **Analyze photos** sends
 up to five compressed images; selection alone sends nothing. Validated visual
 observations/suggestions remain uncertain and user-overridable, not construction
 approval. No project database is included.

@@ -1,6 +1,6 @@
 # Deployment: Bluehost static PWA + Azure photo analysis
 
-**Preparation only. Nothing has been deployed or created.** The website target is
+**Azure infrastructure is now created with explicit owner approval; see deployment status below.** The website target is
 `https://hilltopstructures.us/planner/`. Bluehost shared hosting needs only static
 files; it does not run Next.js, Node or the API. No Bluehost access has been used.
 No sign-in, code-signing, native-wrapper or app-store setup is required.
@@ -25,8 +25,13 @@ npm start
 
 `NEXT_PUBLIC_ANALYZE_URL` is embedded at **build time**. Changing it requires a
 new frontend build/upload; Bluehost environment variables cannot change the JS.
-Example public value (not yet provisioned):
-`https://hilltop-planner-api-UNIQUE.azurewebsites.net/api/analyze`.
+Deployed public endpoint:
+`https://hilltop-planner-api-da467d.azurewebsites.net/api/analyze`.
+
+The upload ZIP built for this deployment already contains that endpoint.
+**XAI_API_KEY was absent from this executor's process environment and was not set
+in Azure.** The live API currently returns `not_configured`; supplying the key
+later does not require rebuilding the frontend.
 
 Upload **the contents of `out/`**, including its hidden `.htaccess`, to
 **`public_html/planner/`**. If hilltopstructures.us has a different domain docroot,
@@ -68,7 +73,7 @@ Post-upload checks (to perform later, not contacted during this work):
 - Visit online, close/reopen, disable network, reload and generate a plan.
 - Print/PDF works; reload still clears unsaved photos/notes/edits.
 
-## 2. Proposed Azure plan (not existing resources)
+## 2. Azure hosting plan and creation reference
 
 Subscription: **Azure subscription 1**
 `fab73657-6b07-46a5-956f-685cf81cb414`.
@@ -90,17 +95,34 @@ Proposals, subject to availability/name/policy checks:
 - Associated Application Insights/logging: review retention, sampling and daily
   ingestion caps. CLI creation can create this resource automatically.
 
-### Inventory/access found on this box
+### Verified deployment (November 8, 2026, CST)
 
-`az` is installed and `az account show` returns the enabled subscription/tenant
-above: a cached/logged-in account context exists. This does **not** verify a live
-management token or deployment permission. Core Tools (`func`) was not installed
-at inspection time. The sanctioned Azure connector's resource-group/subscription
-reads were blocked by policy (`management.azure.com is not allowed`); its Functions
-language inventory was also blocked (`cdn.functions.azure.com is not allowed`).
-Therefore existing groups, Function apps, storage, quotas and usable regions are
-**unknown, not empty**. No lower-level API workaround was attempted. No signing
-accounts, registrations or credentials were inspected for this task.
+- Resource group: `rg-hilltop-planner-api`.
+- Storage: `htplannerda467d`, Standard_LRS, private `deployments` blob container.
+- Required hosting plan: `plan-hilltop-planner-da467d`, FC1 Flex Consumption.
+- Function app: `hilltop-planner-api-da467d`, eastus2, Linux/Node 22, 512 MB.
+- Always-ready: none; maximum scale setting: 40 (not a spending cap).
+- HTTPS only; CORS: `https://hilltopstructures.us` only; credentials disabled.
+- No App Insights, Log Analytics, identities, custom role assignments or gateways.
+- Provider/model settings: explicit `xai`, `grok-4.3`, `https://api.x.ai/v1`.
+- Microsoft.Web and Microsoft.Storage required provider registrations were enabled;
+  no unrelated resource providers/resources were provisioned.
+
+The authenticated Azure CLI 2.92.0 successfully accessed this subscription and
+deployed the reviewed ARM template. No fresh login was needed. Earlier MCP
+connector policy blocks remain connector limitations, not proof the CLI is
+unavailable. `infra/main.json` service validation and resource-ID-only what-if
+passed; the preview contained exactly the approved group/storage/container/plan/app.
+See `.azure/deployed.json` and `.azure/deployment-plan.md` for evidence.
+Core Tools was unnecessary: Azure CLI ZIP deployment completed successfully,
+including trigger synchronization and app health checks. Runtime code was packaged
+with production dependencies using Node 22, without local settings/env files.
+
+Live OPTIONS returned 204 with the exact allowed origin; POST returned 200 with
+`status: not_configured`; a different origin was denied CORS. A real xAI image
+analysis was **not** attempted because the securely supplied key was absent.
+The production browser tests additionally verify the compiled hosted endpoint is
+used only after the user clicks Analyze (mocked response, no AI credits spent).
 
 ### Cost notes — not a quote or a guaranteed free deployment
 
@@ -132,9 +154,10 @@ Set these as **Function app settings**, never frontend variables:
 | Setting | Value / purpose |
 | --- | --- |
 | `XAI_API_KEY` | James's xAI API key, set privately in Azure Portal app settings or via a Key Vault reference. **Never** commit, paste into `.env.local`, `NEXT_PUBLIC_*` or an endpoint URL. |
+| `VISION_PROVIDER` | Production `xai`; explicit provider selection. `openai` selects that alternative; unset/`auto` prefers xAI when its key exists. |
 | `VISION_MODEL` | Default `grok-4.3`, a current image-capable model verified against xAI docs. Override for another supported vision/structured-output model. |
 | `VISION_BASE_URL` | Optional; xAI default `https://api.x.ai/v1`. HTTPS only; no query/credentials. |
-| `OPENAI_API_KEY` | Optional alternative **only when XAI_API_KEY is absent**; default `gpt-4o`, Chat Completions. No automatic failover after an xAI error. |
+| `OPENAI_API_KEY` | Optional alternative in auto mode **only when XAI_API_KEY is absent**, or explicitly choose `VISION_PROVIDER=openai`; default `gpt-4o`, Chat Completions. Production is explicitly xAI. No automatic failover after an xAI error. |
 | `ALLOWED_ORIGINS` | `https://hilltopstructures.us` (comma-separated exact origins if necessary; no wildcard, no `/planner` path). |
 | `REQUIRE_ORIGIN` | `true` (default); reject missing Origin. A trusted server client can explicitly opt out with `false`. |
 | `FUNCTIONS_REQUEST_BODY_SIZE_LIMIT` | `4500000`; host limit, in addition to streamed application validation. |
@@ -175,7 +198,7 @@ CORS is a browser policy, **not authentication**; nonbrowser callers can forge
 Origin. The in-memory rate map is bounded at 10,000 IP buckets (fail closed when
 full), resets on restart, is not shared across scaled instances and relies on
 forwarded-IP ingress behavior. It uses the last `X-Forwarded-For` hop rather than
-the spoofable first one; verify Azure's actual trusted ingress chain before
+the spoofable first one, strips source ports and canonicalizes IPv6 addresses; verify Azure's actual trusted ingress chain before
 launch. Without a header all callers share one bucket; proxy/NAT behavior may
 also group callers. It is **best-effort abuse friction, not production DDoS or
 budget protection**. Add a trusted gateway with distributed throttling and/or
@@ -185,84 +208,61 @@ Static JavaScript cannot keep a Function/shared key secret. Enabling either key
 mode intentionally makes this direct public frontend unable to call the API
 until a trusted server proxy exists. Never "fix" that by embedding a key.
 
-## 4. Manual Azure creation/deployment commands (NOT executed)
+## 4. Key activation and future code-only updates
 
-**Review and obtain deployment approval first. These commands create billable
-resources.** Install a current Azure CLI and Azure Functions Core Tools v4;
-use Node 22. Authenticate interactively through normal Azure tools if needed.
-Check naming availability, quotas, policy, provider registration and role access.
+The infrastructure exists. **Do not create duplicate resources or reapply the
+bootstrap template after setting a key:** its initial inline app-settings list
+would replace that collection and remove the key. See `infra/README.md`.
+
+When James's approved secure prompt makes XAI_API_KEY available in this process:
 
 ```sh
-SUBSCRIPTION=fab73657-6b07-46a5-956f-685cf81cb414
-RG=rg-hilltop-planner-api
-REGION=eastus2
-APP=hilltop-planner-api-REPLACE_WITH_UNIQUE_SUFFIX
-STORAGE=htplannerREPLACEWITHUNIQUESUFFIX  # replace: lowercase alphanumeric, <=24 chars
-az account set --subscription "$SUBSCRIPTION"
-# Read-only discovery; must succeed before creation:
-az group list --subscription "$SUBSCRIPTION" --output table
-az functionapp list-flexconsumption-locations --output table
-# Confirm Node 22 in the selected region using portal/current runtime listing.
-
-az group create --name "$RG" --location "$REGION" --output none
-az storage account create --name "$STORAGE" --resource-group "$RG" \
-  --location "$REGION" --sku Standard_LRS --allow-blob-public-access false --output none
-az functionapp create --name "$APP" --resource-group "$RG" \
-  --storage-account "$STORAGE" --flexconsumption-location "$REGION" \
-  --runtime node --runtime-version 22 --instance-memory 512 \
-  --maximum-instance-count 40 --output none
-# No --always-ready-instances: scale to zero. 40 is a conservative documented
-# HTTP scale ceiling choice, NOT a 1-instance budget cap or guaranteed capacity.
-az functionapp update --name "$APP" --resource-group "$RG" \
-  --set httpsOnly=true --output none
-az functionapp config appsettings set --name "$APP" --resource-group "$RG" \
-  --settings ALLOWED_ORIGINS=https://hilltopstructures.us REQUIRE_ORIGIN=true \
-  VISION_MODEL=grok-4.3 RATE_LIMIT_MAX=10 RATE_LIMIT_WINDOW_SECONDS=600 \
-  FUNCTIONS_REQUEST_BODY_SIZE_LIMIT=4500000 ANALYZE_REQUIRE_FUNCTION_KEY=false \
-  --output none
-az functionapp cors add --name "$APP" --resource-group "$RG" \
-  --allowed-origins https://hilltopstructures.us --output none
-# A new app should have no wildcard CORS; if present, remove it explicitly:
-az functionapp cors remove --name "$APP" --resource-group "$RG" \
-  --allowed-origins '*' --output none
-# Privately add XAI_API_KEY in Portal -> Function app -> environment variables.
-# Do not run commands that print app settings or keys into logs/transcripts.
-
-npm --prefix azure-api ci
-npm --prefix azure-api test
-npm --prefix azure-api run build
-# Ship a locally compiled Linux/Node 22 package with production dependencies.
-npm --prefix azure-api prune --omit=dev
-cd azure-api
-func azure functionapp publish "$APP" --no-build
-cd ..
-npm --prefix azure-api ci  # restore dev dependencies for subsequent tests/builds
-# Read the actual hostname in Azure, then set the nonsecret endpoint locally:
-# NEXT_PUBLIC_ANALYZE_URL=https://ACTUAL_HOSTNAME/api/analyze in .env.local
-npm run build
-# Upload out/ as in section 1; do not upload azure-api/ to Bluehost.
+node scripts/set-xai-key.mjs
+# No-op if absent. If present, sends the key to this Function's app settings using
+# Azure CLI stdin; never prints it, puts it in argv, writes it locally or commits it.
+# The Function restarts automatically. Once ready, this makes ONE paid AI request:
+node scripts/smoke-azure-api.mjs \
+  https://hilltop-planner-api-da467d.azurewebsites.net/api/analyze configured
 ```
 
-Publish runs from `azure-api/`, ships compiled `dist/` with `host.json` and package
-files plus production `node_modules`, and excludes local secrets/source/tests.
-`.funcignore` deliberately does **not** exclude `node_modules`: `--no-build` ships
-the already compiled code and installed dependencies, so no remote compilation
-is assumed. Prune dev dependencies before publishing and restore them afterward.
-Use a Linux/Node 22 build environment; any future native dependencies must match
-Azure's OS/runtime. See [TypeScript build options](https://learn.microsoft.com/en-us/azure/azure-functions/typescript-build-options).
-Review package contents and host logs before exposing the endpoint; do not ship
-a local settings file. Resource names above are placeholders, not reserved.
+Do not put the key into the frontend URL, source, `.env.local`, shell history,
+logs, or a command-line literal. `.azure/key-status.json` contains only a boolean
+and a nonsecret missing-key reason. The smoke script uses a synthetic 256-pixel
+PNG and validates structured output without logging photos or analysis contents.
+If Azure requires a fresh login, stop and complete the normal interactive/device
+login; never extract/reuse tokens or credentials through other means.
 
-Host CORS and `ALLOWED_ORIGINS` must match; origin is the domain, not a URL path.
-Add www only if that site really serves the planner, and add localhost only for
-local testing. Do not enable credentialed wildcard CORS.
+For a future code-only release, rebuild the Function and create a ZIP with
+`host.json`, package files, compiled `dist/` and production Node 22 `node_modules`
+at archive root, excluding all `.env*`, local settings, tests and source files.
+The verified package for this deployment is `/workspace/planner-function.zip`.
+Deploy a freshly rebuilt package (not stale code) with:
 
-For local host testing, install Core Tools v4 plus Azurite, copy
-`azure-api/local.settings.example.json` to ignored `azure-api/local.settings.json`,
-start Azurite and `npm --prefix azure-api start`. Set frontend public endpoint to
-`http://localhost:7071/api/analyze` and restart Next dev. Only loopback HTTP is
-accepted by the frontend; production requires HTTPS. No live host/provider call
-has been made in this work: provider tests are mocked and `func` was unavailable.
+```sh
+az functionapp deployment source config-zip \
+  --subscription fab73657-6b07-46a5-956f-685cf81cb414 \
+  --resource-group rg-hilltop-planner-api --name hilltop-planner-api-da467d \
+  --src /workspace/planner-function.zip --build-remote false --timeout 600 --output none
+```
+
+This preserves app settings and creates no additional infrastructure. Core Tools
+v4 is an alternative first-party publisher if installed: compile TypeScript,
+prune development dependencies, and use `func azure functionapp publish
+hilltop-planner-api-da467d --no-build` from `azure-api/`. `.funcignore` intentionally
+includes production node_modules and excludes secrets/source/tests. Restore dev
+dependencies after publishing. Never use `--publish-local-settings` or `--show-keys`.
+
+Rebuild a public upload archive with the nonsecret endpoint:
+
+```sh
+NEXT_PUBLIC_ANALYZE_URL=https://hilltop-planner-api-da467d.azurewebsites.net/api/analyze npm run build
+```
+
+Host CORS and ALLOWED_ORIGINS must remain the exact production origin (no path,
+no wildcard, no credentialed wildcard). Local browser API integration uses mocks;
+real Azure CORS is tested with the allowed origin by the explicit smoke script.
+No Bluehost access/upload has occurred. The local preview verifies static files,
+not production Apache headers or real-device install/camera behavior.
 
 ## 5. Local verification
 

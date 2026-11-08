@@ -76,4 +76,19 @@ describe('Azure photo analysis',()=>{
     expect((await createAnalyzeHandler({env:{XAI_API_KEY:'test-only'},fetcher})(req())).status).toBe(502);
   });
 
+  it('honors explicit xAI selection without silently using an OpenAI key',async()=>{
+    const fetcher=vi.fn();
+    const result=await createAnalyzeHandler({env:{VISION_PROVIDER:'xai',OPENAI_API_KEY:'test-only'},fetcher})(req());
+    expect(result.jsonBody).toMatchObject({status:'not_configured'});
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('groups forwarded IPv4/IPv6 source ports into per-IP buckets',async()=>{
+    const handler=createAnalyzeHandler({env:{RATE_LIMIT_MAX:'1'}});
+    for(const [first,second] of [['192.0.2.10:12345','192.0.2.10:54321'],['[2001:db8::1]:12345','[2001:db8:0:0:0:0:0:1]:54321']]) {
+      expect((await handler(req([image],{'x-forwarded-for':first}))).status).toBe(200);
+      expect((await handler(req([image],{'x-forwarded-for':second}))).status).toBe(429);
+    }
+  });
+
 });

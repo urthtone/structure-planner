@@ -5,6 +5,7 @@
     "FUNCTIONS_WORKER_RUNTIME":"node",
     "FUNCTIONS_REQUEST_BODY_SIZE_LIMIT":"4500000",
     "XAI_API_KEY":"",
+    "VISION_PROVIDER":"xai",
     "VISION_MODEL":"grok-4.3",
     "ALLOWED_ORIGINS":"https://hilltopstructures.us,http://localhost:3000,http://127.0.0.1:3102",
     "REQUIRE_ORIGIN":"true",

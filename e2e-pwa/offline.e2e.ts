@@ -76,3 +76,30 @@ test("installable manifest, mobile layout, camera input and offline reload work"
     fullPage: true,
   });
 });
+
+
+test("configured static export sends photos only to its built-in hosted endpoint on request",async({page})=>{
+  const endpoint=process.env.NEXT_PUBLIC_ANALYZE_URL;
+  test.skip(!endpoint,"A configured export is required for this deployment-specific test.");
+  let posts=0;
+  await page.route(endpoint!,route=>{
+    if(route.request().method()==="POST") {
+      posts++;
+      const body=route.request().postDataJSON();
+      expect(body.images).toHaveLength(1);
+      expect(body.images[0]).toMatch(/^data:image\/jpeg;base64,/);
+    }
+    return route.fulfill({status:200,headers:{
+      "Access-Control-Allow-Origin":"*",
+      "Access-Control-Allow-Methods":"POST, OPTIONS",
+      "Access-Control-Allow-Headers":"Content-Type",
+    },json:{status:"not_configured",message:"Photo analysis not configured (mocked deployment contract)."}});
+  });
+  await page.goto("/planner/");
+  await page.getByLabel("Upload photos",{exact:true}).setInputFiles("azure-api/test/fixtures/synthetic-site.png");
+  await expect(page.locator(".count")).toHaveText("1/5");
+  expect(posts).toBe(0);
+  await page.getByRole("button",{name:"Analyze photos",exact:true}).click();
+  await expect(page.getByRole("status")).toContainText("Photo analysis not configured");
+  expect(posts).toBe(1);
+});

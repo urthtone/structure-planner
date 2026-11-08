@@ -1,48 +1,107 @@
-# Deployment preparation plan
+# Planner Azure deployment record
 
-Status: Local preparation complete; Azure deployment NOT authorized or validated.
+Status: Deployed. No-key API/CORS smoke verified; xAI key pending (not in process environment).
+Recipe: Azure CLI + native ARM template; Azure Prepare -> Azure Validate -> Azure Deploy completed.
 
-## Scope and architecture
+## 1. Approval and scope
 
-- Static Next.js/PWA export at `/planner/` for Apache/Bluehost.
-- Separate Azure Functions v4 programming-model Node 22 photo-analysis app.
-- Public build-time NEXT_PUBLIC_ANALYZE_URL; provider secrets only in Function settings.
-- xAI Responses API, current vision-capable `grok-4.3` default, model overridable.
-- Manual Flex Consumption creation/publish commands in docs/DEPLOY.md only.
-- No signing, sign-in, native packaging, Azure provisioning or Bluehost access.
+James explicitly approved creating the proposed resources and deploying the photo
+reader. Subscription: Azure subscription 1, fab73657-6b07-46a5-956f-685cf81cb414.
+Region selected: eastus2, confirmed supported with Node 22. No fresh login needed.
+No signing, user sign-in, native wrapper, Bluehost access, push or main changes.
 
-## Proposed Azure resources
+## 2. Resources actually created
 
-Subscription: Azure subscription 1 (fab73657-6b07-46a5-956f-685cf81cb414).
-Proposed group: rg-hilltop-planner-api; region eastus2 pending availability checks.
-Proposed Linux Flex Consumption/Node 22, 512 MB, no always-ready instances.
-Names, region, quotas, costs, RBAC and production gateway need owner review.
+- rg-hilltop-planner-api (eastus2).
+- htplannerda467d, StorageV2/Standard_LRS; private deployments blob container.
+- plan-hilltop-planner-da467d, required FC1/Linux Flex hosting plan.
+- hilltop-planner-api-da467d, Node 22, 512 MB, no always-ready, max scale 40.
+- No App Insights, Log Analytics, identities, custom roles, gateway or database.
+- Only required Microsoft.Web/Microsoft.Storage provider registrations enabled.
 
-## Validation proof (LOCAL ONLY)
+## 3. Runtime and security
 
-- npm run lint: passed.
-- npm test: 17 frontend/engine tests + 10 mocked-provider Function tests passed.
-- npm run build:api: passed; compiled SDK entry point and standalone handler.
-- Node 22.23.4 isolated TypeScript build and 10 Function tests: passed.
-  Default box Node is 24.22.1; Node 22 checks used npm exec's isolated Node binary.
-- npm run test:e2e: 4 passed (photo limits/compression, suggestions, manual plan, PDF).
-- npm run test:e2e:pwa: static Next build plus 1 production mobile browser test passed.
-  Browser verified /planner assets/manifest/icons, service-worker scope, offline
-  reload/generation, no horizontal overflow/runtime errors, and default $4,189.10.
-- Generated out/.htaccess exists; all 28 precache resources exist under /planner/.
-- git diff --check: passed.
+Endpoint: https://hilltop-planner-api-da467d.azurewebsites.net/api/analyze
+HTTPS only; exact-origin CORS https://hilltopstructures.us, no credentials.
+Explicit VISION_PROVIDER=xai; VISION_MODEL=grok-4.3; VISION_BASE_URL=https://api.x.ai/v1.
+Input: 5 bounded images, 4.5 MB streamed body cap; 35-second provider timeout.
+Basic per-process IP throttling: 10 requests / 600 seconds, bounded buckets.
+This is not authentication, distributed DDoS protection or a hard spend cap.
+XAI_API_KEY absent from process environment; not set on Azure, never printed,
+written locally or committed. Live AI result testing is conditional/pending.
 
-## Live validation blockers / deliberately not performed
+## 4. Deployment packaging
 
-- Cached Azure CLI context shows the enabled subscription/tenant; live token and
-  deployment permission not independently verified.
-- Sanctioned connector resource-group/subscription reads blocked by policy:
-  management.azure.com not allowed. Functions language inventory similarly blocked
-  for cdn.functions.azure.com. Existing resource/region/quotas are unknown.
-- No Azure resources created, modified or deployed; no Bicep/ARM preview executed.
-- Azure validation/deploy stages not entered: deployment plan lacks owner approval.
-- Core Tools is not installed; actual Functions host/startup not smoke-tested.
-- No real xAI/optional OpenAI request; tests inject a mocked provider.
-- No Bluehost/Apache access or real-phone install/camera testing.
-- CORS and in-memory IP throttling are not authentication/distributed spending caps;
-  gateway authorization/throttling and provider spending controls need launch review.
+Native ARM bootstrap template: infra/main.json + deployment.parameters.json.
+No credentials in templates or outputs. Storage connection strings are generated
+inside Azure, with no local credential inspection or output. No MI/RBAC needed.
+Bootstrap inline app settings must not be reapplied after adding a provider key;
+future code-only ZIP deployments preserve app settings (see infra/README.md).
+Compiled production package: /workspace/planner-function.zip, Node 22 dependencies,
+124 files, no env/local.settings/source/test files. CLI ZIP deployment succeeded.
+
+## 5. Cost settings
+
+Flex scales to zero; no always-ready baseline or optional telemetry resources.
+Storage, execution memory/time, networking and future xAI calls are separately
+billable. Max scale 40 and in-memory throttling are not budget caps. Current paid
+provider smoke calls: zero (key unavailable). Pricing references in docs/DEPLOY.md.
+
+## 6. Live smoke results
+
+OPTIONS: 204, Access-Control-Allow-Origin exactly https://hilltopstructures.us.
+POST with one synthetic small PNG: 200, status not_configured.
+Different origin denied CORS. No provider credits spent.
+Structured xAI response not live-tested: secure environment key absent.
+Evidence: .azure/smoke-unconfigured.json and .azure/deployed.json.
+
+## 7. Validation proof — November 8, 2026 (CST)
+
+- 5:26 PM CST: az group exists succeeded; target group absent; subscription matched.
+- 5:27 PM CST: az version 2.92.0; Flex region and Node 22 runtime listing passed.
+- Required providers registered by 5:30 PM CST; storage name available.
+- ARM JSON parsed; Bicep compilation N/A (native ARM). No Docker/container used.
+- az deployment sub validate: Succeeded at 5:29 PM CST.
+- az deployment sub what-if, ResourceIdOnly: Succeeded at 5:30 PM CST, exactly
+  five Create changes (group/storage/container/plan/function), no deletes/extras.
+- Subscription policy list empty; actual ARM validation passed. Static/live role
+  review: no managed identities/custom roles; shared-key storage configured in
+  Azure; deployed host loads the published anonymous HTTP function successfully.
+- npm run lint; npm test: 17 frontend/engine + 12 Function tests passed.
+- npm run build:api; isolated Node 22 Function tests/build passed.
+- Production-only Node 22 package installed; npm audit zero vulnerabilities;
+  compiled handler loads and ZIP excludes env/local settings.
+- az deployment sub create: Succeeded at 5:32 PM CST.
+- az functionapp deployment source config-zip: exit 0 at 5:33 PM CST, trigger sync
+  and host health check completed. Actual resource inventory contains only the
+  required storage, FC1 plan and Function, in the approved group.
+- Live CORS/no-key smoke passed at 5:33 PM CST.
+- npm run test:e2e: 4 passed (intake, compression, suggestions, manual plan/PDF).
+- Static build with actual NEXT_PUBLIC_ANALYZE_URL passed; 28 scoped precache files.
+- Production browser tests: 2 passed, including offline reload/default $4,189.10
+  shed plan, manifest/icons/scope/mobile layout and configured hosted endpoint
+  used only on Analyze click (mocked response, no provider credits).
+- git diff --check passed. Archive and final source checks recorded in commit.
+
+## 8. Remaining checks
+
+Secure xAI key activation + one real image result; production Apache headers and
+physical-phone install/camera behavior after the owner uploads the static files.
+No Bluehost login/upload performed. No fresh Azure login or resource blockers.
+
+### Final code-only hardening
+
+Before activation of paid analysis, a regression test exposed source ports in
+forwarded-IP quota keys. IPv4 ports and bracketed IPv6 ports are now stripped,
+IPv6 forms canonicalized, and malformed addresses fail into a shared bucket.
+The 12 Function tests (including this red/green regression) and Node 22 build
+passed before a code-only ZIP update. No infrastructure/app settings changed.
+This does not change the documented trusted-proxy/distributed-limit caveats.
+
+### Upload artifact
+
+/workspace/planner-upload.zip: 41 static files, 366383 bytes. Includes .htaccess
+at archive root, /planner-scoped shell and compiled live API URL; no out/ wrapper,
+provider key identifiers or local settings. ZIP CRC verified; sha256 and CST build
+time recorded in .azure/upload-artifact.json. Upload contents to the domain's
+planner/ directory. No Bluehost upload/access performed.
