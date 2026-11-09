@@ -2,8 +2,8 @@
 
 **Azure infrastructure is now created with explicit owner approval; see deployment status below.** The website target is
 `https://hilltopstructures.us/planner/`. Bluehost shared hosting needs only static
-files; it does not run Next.js, Node or the API. No Bluehost access has been used.
-No sign-in, code-signing, native-wrapper or app-store setup is required.
+files; it does not run Next.js, Node or the API. The live Vite build is already on Bluehost as described below.
+No code-signing, native-wrapper or app-store setup is required.
 
 ## Supplied Grok frontend (current requested upload)
 
@@ -15,6 +15,22 @@ See [GROK_FRONTEND.md](GROK_FRONTEND.md) for the exact contract, upload layout a
 important differences (including no PWA/Apache files and an unused client schema).
 `/api/analyze` remains available for the original Next/PWA below. Both routes share
 the existing limits and settings; XAI_API_KEY remains only in Function settings.
+
+
+## Live Bluehost layout (as of November 9, 2026)
+
+Account home: `/home2/conniew7`. Live URL: `https://hilltopstructures.us/planner/`.
+Site files are under `public_html/website_98d9e671/planner/` (not `public_html/planner/`).
+
+Current live upload (10-photo Vite build from `frontend/live-build/`):
+
+- Replaced `planner/index.html` (loads `/planner/assets/bluehost-10photos.js` and `config.js?v=2`).
+- Added `planner/assets/bluehost-10photos.js`. Older `bluehost-*.js` files were left in place.
+- **Do not overwrite** `config.js`, the CSS, or `favicon.svg`. `config.js` holds `window.HILLTOP_PLAN_API`. Cloudflare can cache a blank `config.js` for a day; the `?v=2` query string is required until cache headers are fixed.
+- There is a nested `planner/planner/` subfolder; do not upload there by mistake.
+- `curl` often gets a Cloudflare challenge; confirm in a browser or File Manager.
+
+**Work storage:** `/home2/conniew7/planner-work/` is a sibling of `public_html`, so it is not web-served. A copy of `planner-10photos.zip` is already there. Prefer this folder for drafts and zips. Fallback if needed: `public_html/website_98d9e671/_planner_work` with a deny-all `.htaccess`.
 
 ## 1. Build and upload the original Next/PWA frontend
 
@@ -276,7 +292,7 @@ NEXT_PUBLIC_ANALYZE_URL=https://hilltop-planner-api-da467d.azurewebsites.net/api
 Host CORS and ALLOWED_ORIGINS must remain the exact production origin (no path,
 no wildcard, no credentialed wildcard). Local browser API integration uses mocks;
 real Azure CORS is tested with the allowed origin by the explicit smoke script.
-No Bluehost access/upload has occurred. The local preview verifies static files,
+Bluehost already hosts the live Vite planner as described above. The local preview still verifies static files,
 not production Apache headers or real-device install/camera behavior.
 
 ## 5. Local verification
