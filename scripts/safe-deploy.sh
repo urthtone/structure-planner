@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Sync approved Structure Planner frontend files to the live Bluehost folder.
-# Never overwrites config.js, .htaccess, or .env files.
+# Never overwrites config.js or .env files. It does update .htaccess from the source.
 # Default is a dry run. Pass --live to actually copy.
 #
 # Run this on Bluehost (SSH or cPanel Terminal), not from a Windows checkout
@@ -81,6 +81,12 @@ STAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="$BACKUP_DIR/config.js.bak.$STAMP"
 cp -p "$LIVE_DIR/config.js" "$BACKUP_FILE"
 echo "Backed up live config.js -> $BACKUP_FILE"
+HTACCESS_BACKUP=""
+if [[ -f "$LIVE_DIR/.htaccess" ]]; then
+  HTACCESS_BACKUP="$BACKUP_DIR/htaccess.bak.$STAMP"
+  cp -p "$LIVE_DIR/.htaccess" "$HTACCESS_BACKUP"
+  echo "Backed up live .htaccess -> $HTACCESS_BACKUP"
+fi
 
 RSYNC_FLAGS=(-av)
 if [[ "$LIVE" -eq 0 ]]; then
@@ -94,22 +100,29 @@ echo "Destination: $LIVE_DIR"
 
 # Allowlist only frontend files. Never copy config.js or config.example.js.
 # --delete is intentionally omitted so untracked live files stay put.
-rsync "${RSYNC_FLAGS[@]}" \
+if ! rsync "${RSYNC_FLAGS[@]}" \
   --exclude='config.js' \
   --exclude='**/config.js' \
   --exclude='config.example.js' \
   --exclude='.env*' \
-  --exclude='.htaccess' \
   --exclude='README.md' \
   --exclude='*.zip' \
   --include='index.html' \
   --include='favicon.svg' \
   --include='manifest.webmanifest' \
   --include='sw.js' \
+  --include='.htaccess' \
   --include='assets/' \
   --include='assets/***' \
   --exclude='*' \
-  "$SOURCE_DIR/" "$LIVE_DIR/"
+  "$SOURCE_DIR/" "$LIVE_DIR/"; then
+  echo "ABORT: sync failed."
+  if [[ -n "$HTACCESS_BACKUP" && -f "$HTACCESS_BACKUP" ]]; then
+    cp -p "$HTACCESS_BACKUP" "$LIVE_DIR/.htaccess"
+    echo "Restored live .htaccess from backup."
+  fi
+  exit 1
+fi
 
 if ! cmp -s "$LIVE_DIR/config.js" "$BACKUP_FILE"; then
   echo "ABORT: config.js changed during sync; restoring from backup."
