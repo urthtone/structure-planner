@@ -204,7 +204,7 @@ export function createVisionHandler<T>(task: VisionTask<T>, options: HandlerOpti
       };
       const response = await fetcher(`${base.href.replace(/\/$/,'')}/${xai ? 'responses' : 'chat/completions'}`,{
         method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
-        signal:AbortSignal.timeout(task.providerTimeoutMs ?? 35000),body:JSON.stringify(body),
+        signal:AbortSignal.timeout(task.providerTimeoutMs ?? 80000),body:JSON.stringify(body),
       });
       if (!response.ok) throw new Error('Provider failed.');
       const text = responseText(await readBoundedJson(response,128000),xai);

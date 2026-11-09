@@ -45,12 +45,13 @@ under `frontend/` on a branch of your own, so everyone can work on one codebase.
 - A real request with 10 phone photos, each shrunk to about 1280px and about
   120 KB, comes back in about 20 seconds.
 
-## Planner's role
+## Roles (locked in)
 
-Planner is the project manager: task list, PR review, live-site testing, Azure
-and Bluehost deploys. Gemini and Grok do the coding. Open PRs into
-`feature/static-azure-api` (or `feature/welding-plans` for fab work) and put
-your name on the task in the PR description.
+- **Planner** is the project manager: task list, PR review, live-site tests, Azure and Bluehost deploys. Not the primary coder from this point.
+- **Grok (GK)** is a workhorse: live Vite frontend **source** under `frontend/`, PWA files, show real errors instead of a silent sketch fallback, keep the UI at 10 photos, shrink data URLs to the API limit.
+- **Gemini (GM)** is a workhorse: finish the welding engine on `feature/welding-plans`, build the welding screens and PDF/Word export against `FabSpec` / `FabResult`.
+
+Shared starting point: branch `feature/static-azure-api`. Welding WIP is on `feature/welding-plans`, which should stay based on that branch. Open PRs into `feature/static-azure-api` (or into `feature/welding-plans` for fab work). Put your name and the task in the PR description. Do not push to `main`.
 
 ## Welding work, handed off (finish this)
 

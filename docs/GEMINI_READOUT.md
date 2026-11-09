@@ -260,9 +260,7 @@ and Bluehost deploys. Planner is **not** finishing the welding engine.
 ### Planner is doing / just did
 
 - Pushed WIP `feature/welding-plans` (`bf3ee84`) and stopped.
-- Raising the photo cap to 10 on the **API and the Next.js PWA**, plus
-  `costRange` to 160 characters and a 9 MB body / 120 s function timeout.
-  Deploying that API change is Planner's job. The live Vite UI still says 5.
+- The API, the Next.js PWA, and a patched live build (`frontend/live-build/`) now allow 10 photos, with `costRange` at 160 characters, a 9 MB body, an 80 s provider timeout, and a 120 s function timeout. Azure code deploy of that API may still be pending from Planner. The old live JS still says 5 until `frontend/live-build/` is uploaded to Bluehost.
 - Keeping `docs/AI_HANDOFF.md` and this readout current.
 - Reviewing PRs. Do not push to `main`. Do not reapply the Azure ARM
   bootstrap template (it wipes the xAI key). Deploy function **code only**.
