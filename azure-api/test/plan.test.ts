@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { createPlanHandler } from '../src/plan';
 import { planSchema } from '../src/plan-contract';
 import { createAnalyzeHandler } from '../src/analyze';
-import { createRateLimitState } from '../src/vision-handler';
+import { createRateLimitState, MAX_BODY_BYTES, MAX_IMAGE_DATA_LENGTH } from '../src/vision-handler';
 
 const originalSchema = runInNewContext(readFileSync(new URL('./fixtures/grok-plan-zod-expression.txt', import.meta.url),'utf8'),{
   Ps:z.object,es:z.string,ws:z.number,Bs:z.enum,Ms:z.array,uc:['shed','deck','cabin','garage'],
@@ -19,7 +19,12 @@ const env={XAI_API_KEY:'test-only',VISION_PROVIDER:'xai'};
 
 describe('Grok frontend plan contract',()=>{
   it('matches every constraint of the schema extracted from the actual frontend bundle',()=>{
-    expect(z.toJSONSchema(planSchema)).toEqual(z.toJSONSchema(originalSchema));
+    // Only intentional difference: costRange raised 80 → 160 so cost lines aren't cut off.
+    const ours=z.toJSONSchema(planSchema) as {properties:{costRange:{maxLength:number}}};
+    const theirs=z.toJSONSchema(originalSchema) as {properties:{costRange:{maxLength:number}}};
+    expect(theirs.properties.costRange.maxLength).toBe(80);expect(ours.properties.costRange.maxLength).toBe(160);
+    ours.properties.costRange.maxLength=80;
+    expect(ours).toEqual(theirs);
     expect(originalSchema.safeParse(plan).success).toBe(true);
   });
   it('accepts the exact measured request and returns ok + plan validated with the original schema',async()=>{
@@ -71,10 +76,12 @@ describe('Grok frontend plan contract',()=>{
     expect(fetcher).not.toHaveBeenCalled();
   });
   it('retains five-photo, raster, per-image and streamed body caps',async()=>{
-    for(const images of [[],Array(6).fill(image),['data:image/svg+xml;base64,AAAA'],['data:image/png;base64,'+'A'.repeat(650000)]]){
+    for(const images of [[],Array(6).fill(image),['data:image/svg+xml;base64,AAAA']]){
       const result=await createPlanHandler({env})(req({...input,images}));expect(result.status).toBe(400);expect(result.jsonBody).toMatchObject({ok:false});
     }
-    const result=await createPlanHandler({env})(req(input,{'content-length':'4500001'}));expect(result.status).toBe(400);
+    const big=await createPlanHandler({env})(req({...input,images:[image,'data:image/png;base64,'+'A'.repeat(MAX_IMAGE_DATA_LENGTH)]}));
+    expect(big.status).toBe(413);expect(big.jsonBody).toMatchObject({ok:false,error:expect.stringMatching(/Photo 2 .*Resize/)});
+    const result=await createPlanHandler({env})(req(input,{'content-length':String(MAX_BODY_BYTES+1)}));expect(result.status).toBe(413);
   });
   it('requires exactly one valid reading for each submitted photo',async()=>{
     for(const photoReadings of [[],[{index:2,reading:'Wrong image.'}],[plan.photoReadings[0],plan.photoReadings[0]]]){
@@ -111,3 +118,13 @@ describe('Grok frontend plan contract',()=>{
   });
 });
 function inputDimensions(){return {widthFt:10,lengthFt:12,wallHeightFt:8};}
+describe('costRange length',()=>{
+  it('allows up to 160 characters and trims longer ones on a word boundary',async()=>{
+    const long='$2,800–$4,200 for steel tube, corrugated panels, fasteners, door and window kits; excludes concrete, delivery, paint and labor. Prices vary widely by region and season.';
+    const result=await createPlanHandler({env,fetcher:vi.fn().mockImplementation(async()=>new Response(JSON.stringify({output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({...planFixture(),costRange:long.slice(0,160)})}]}]})))})(new Request('https://functions.example.test/api/plan',{method:'POST',headers:{origin:'https://hilltopstructures.us','x-forwarded-for':'192.0.2.77'},body:JSON.stringify({images:['data:image/png;base64,AAAA'],structureType:'shed',widthFt:10,lengthFt:12,heightFt:8,estimateSize:false,material:'wood',notes:''})}));
+    const cost=(result.jsonBody as {plan:{costRange:string}}).plan.costRange;
+    expect(cost.length).toBeLessThanOrEqual(160);expect(cost.length).toBeGreaterThan(80);
+    expect(cost).toMatch(/\S…$/);
+  });
+});
+function planFixture(){return plan;}

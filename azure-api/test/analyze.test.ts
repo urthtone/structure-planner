@@ -1,3 +1,4 @@
+import { MAX_BODY_BYTES, MAX_IMAGE_DATA_LENGTH } from '../src/vision-handler';
 import { describe, expect, it, vi } from 'vitest';
 import { createAnalyzeHandler } from '../src/analyze';
 const image = 'data:image/jpeg;base64,/9j/';
@@ -26,12 +27,16 @@ describe('Azure photo analysis',()=>{
     expect(JSON.parse(fetcher.mock.calls[0][1].body).model).toBe('custom-vision');
   });
   it('rejects non-images, too many images and oversized streams',async()=>{
-    for(const images of [[],Array(6).fill(image),['https://example.test/a.png'],['data:image/svg+xml;base64,AAAA'],['data:image/jpeg;base64,'+'A'.repeat(650000)]]) {
+    for(const images of [[],Array(6).fill(image),['https://example.test/a.png'],['data:image/svg+xml;base64,AAAA']]) {
       expect((await createAnalyzeHandler({env:{}})(req(images))).status).toBe(400);
     }
-    expect((await createAnalyzeHandler({env:{}})(req([image],{'content-length':'4500001'}))).status).toBe(400);
-    const big = new Request('https://example.test/api/analyze',{method:'POST',headers:{origin:'https://hilltopstructures.us'},body:'a'.repeat(4500001)});
-    expect((await createAnalyzeHandler({env:{}})(big)).status).toBe(400);
+    // A ~2 MB phone photo is now accepted; anything over the per-photo cap gets a clear 413.
+    expect((await createAnalyzeHandler({env:{}})(req(['data:image/jpeg;base64,'+'A'.repeat(2_000_000)]))).status).toBe(200);
+    const tooBig=await createAnalyzeHandler({env:{}})(req(['data:image/jpeg;base64,'+'A'.repeat(MAX_IMAGE_DATA_LENGTH)]));
+    expect(tooBig.status).toBe(413);expect(JSON.stringify(tooBig.jsonBody)).toMatch(/Photo 1 is .* MB.*limit is 2\.8 MB.*Resize/);
+    expect((await createAnalyzeHandler({env:{}})(req([image],{'content-length':String(MAX_BODY_BYTES+1)}))).status).toBe(413);
+    const big = new Request('https://example.test/api/analyze',{method:'POST',headers:{origin:'https://hilltopstructures.us'},body:'a'.repeat(MAX_BODY_BYTES+1)});
+    expect((await createAnalyzeHandler({env:{}})(big)).status).toBe(413);
   });
   it('restricts origins, handles preflight and can require a server-to-server shared key',async()=>{
     const handler=createAnalyzeHandler({env:{}});

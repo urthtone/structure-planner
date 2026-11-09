@@ -1,7 +1,12 @@
 import { z } from 'zod';
 
+export const COST_RANGE_MAX = 160;
 export const structureTypes = ['shed','deck','cabin','garage'] as const;
-/** Matches the supplied bluehost-BoaV2Lvu.js Zod expression, including limits. */
+/**
+ * Matches the supplied bluehost-BoaV2Lvu.js Zod expression, including limits, except
+ * costRange: raised from 80 to 160 characters so cost lines are no longer cut off
+ * mid-word (the supplied frontend never runs its own validator on responses).
+ */
 export const planSchema = z.object({
   title:z.string().min(1).max(120),
   structureType:z.enum(structureTypes),
@@ -13,7 +18,7 @@ export const planSchema = z.object({
   materials:z.array(z.object({item:z.string().max(80),qty:z.string().max(40),notes:z.string().max(160)})).max(16),
   steps:z.array(z.object({title:z.string().max(80),detail:z.string().max(400)})).min(1).max(10),
   warnings:z.array(z.string().max(240)).max(6),
-  costRange:z.string().max(80),
+  costRange:z.string().max(COST_RANGE_MAX),
 });
 export type StructurePlan = z.infer<typeof planSchema>;
 
@@ -63,6 +68,8 @@ export function validatePlan(value: unknown, input: PlanInput, imageCount: numbe
     plan.siteNotes=('Dimensions assumed for planning, not measured from photos. '+plan.siteNotes).slice(0,800);
   }
   plan.warnings=[...warnings,...plan.warnings].slice(0,6);
-  plan.costRange=('Example allowance, not a quote: '+(plan.costRange || 'verify local supplier prices')).slice(0,80);
+  const cost='Example allowance, not a quote: '+(plan.costRange || 'verify local supplier prices');
+  // Trim on a word boundary rather than mid-word.
+  plan.costRange=cost.length<=COST_RANGE_MAX?cost:cost.slice(0,COST_RANGE_MAX-1).replace(/\s+\S*$/,'')+'…';
   return planSchema.parse(plan);
 }
