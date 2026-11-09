@@ -38,6 +38,11 @@ hilltopstructures.us.
 
 The canonical 10-photo live-build files in this repo are under `frontend/live-build/`. Upload `index.html` and the new JS only; never overwrite live `config.js`.
 
+**Safe deploy:** use `scripts/safe-deploy.sh` on Bluehost (SSH or cPanel Terminal). It is a dry run by default; pass `--live` to copy. The live path is hard-coded to `public_html/website_98d9e671/planner` (not `public_html/planner`). It backups `config.js`, copies only an allowlist of frontend files (`index.html`, `assets/`, favicon, and later PWA files), and aborts if `config.js` changes or if the live folder is missing. Do not rsync the whole `planner-work` folder to the web root — that folder may later hold a repo, zips, or drafts.
+
+Grok and Gemini should work from a local clone of this GitHub repo (VS Code or the Gemini CLI). Planner keeps `feature/static-azure-api` and `feature/welding-plans` current, so pull those branches instead of pasting the repo into chat.
+
+
 ## Two frontends (important)
 
 1. **The live site is Grok's prebuilt Vite/React app.** Only the build output is
