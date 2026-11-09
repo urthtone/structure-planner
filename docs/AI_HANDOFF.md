@@ -6,9 +6,14 @@ change anything.
 
 ## What this is
 
-Structure Planner turns up to 10 photos plus a few answers into a build plan for
+The live product name on the frontend is **Fab-Planner**. The GitHub repo remains
+`structure-planner`, and the URL stays https://hilltopstructures.us/planner/ unless
+James says to change the path.
+
+Fab-Planner turns up to 10 photos plus a few answers into a build plan for
 small structures (sheds, decks, cabins, garages). Steel and welding projects are
-being added now.
+being added now: box blinds and steel sheds, trailers, gates and fences,
+carports and steel buildings, and water troughs.
 
 - **Live app:** https://hilltopstructures.us/planner/ (Bluehost, folder
   `public_html/website_98d9e671/planner`, served through Cloudflare).
@@ -45,7 +50,7 @@ Grok and Gemini should work from a local clone of this GitHub repo (VS Code or t
 
 ## Two frontends (important)
 
-1. **The live site is Grok's prebuilt Vite/React app.** Only the build output is
+1. **The live site is Grok's prebuilt Vite/React app, branded Fab-Planner.** Only the build output is
    on Bluehost. Its source is **not** in this repo yet. It reads
    `window.HILLTOP_PLAN_API` from `/planner/config.js`, and `index.html` loads
    `config.js?v=2` to get past the Cloudflare cache.
@@ -72,7 +77,7 @@ under `frontend/` on a branch of your own, so everyone can work on one codebase.
 ## Roles (locked in)
 
 - **Planner** is the project manager: task list, PR review, live-site tests, Azure and Bluehost deploys. Not the primary coder from this point.
-- **Grok (GK)** is a workhorse: live Vite frontend **source** under `frontend/`, PWA files, show real errors instead of a silent sketch fallback, keep the UI at 10 photos, shrink data URLs to the API limit.
+- **Grok (GK)** is a workhorse: live Vite frontend **source** under `frontend/`, visible product name **Fab-Planner**, PWA files, show real errors instead of a silent sketch fallback, keep the UI at 10 photos, shrink data URLs to the API limit.
 - **Gemini (GM)** is a workhorse: finish the welding engine on `feature/welding-plans`, build the welding screens and PDF/Word export against `FabSpec` / `FabResult`.
 
 Shared starting point: branch `feature/static-azure-api`. Welding WIP is on `feature/welding-plans`, which should stay based on that branch. Open PRs into `feature/static-azure-api` (or into `feature/welding-plans` for fab work). Put your name and the task in the PR description. Do not push to `main`.
@@ -100,7 +105,8 @@ Planner stopped mid-build so you can take it. The WIP is on branch
 
 Pick one, put your name on it in a PR description, and use your own branch:
 
-1. **Live frontend fixes (Grok's app):**
+1. **Rename the visible UI to Fab-Planner.** Title, headings, manifest name, and in-app copy should say Fab-Planner. Keep the URL at `/planner/` and do not rename the GitHub repo.
+2. **Live frontend fixes (Grok's app):**
    - Shrink photos on the device to about 1600px JPEG at 0.8 quality before
      upload. Full 2-3 MB phone photos are too big for the API.
    - Stop silently falling back to placeholder math when the reader fails. Show
@@ -108,13 +114,15 @@ Pick one, put your name on it in a PR description, and use your own branch:
    - Use the zod validator that's already bundled to check API responses.
    - Add `manifest.webmanifest`, a service worker, and an `.htaccess` (SPA
      fallback, no-cache on `config.js` and `index.html`).
-2. **Welding UI screens** in the live frontend: a "Welding project" type with
-   the 4 subtypes, a stock form (profile, stick length, kerf), and result tabs
-   for Cut list, Stock, Parts, and Plans. Build against the `/api/fab` contract
-   once `docs/WELDING.md` lands. Until then, mock it.
-3. **Export buttons** wired to Planner's export module (PDF and DOCX), once
+3. **Welding UI screens** in the live frontend: a Welding project type with
+   five subtypes (box blinds and steel sheds, trailers, gates and fences,
+   carports and steel buildings, and water troughs), a stock form (profile, stick
+   length, kerf), and result tabs for Cut list, Stock, Parts, and Plans. Build
+   against the `/api/fab` contract once `docs/WELDING.md` lands. Until then, mock it.
+   Do not send welding projects through `/api/plan`.
+4. **Export buttons** wired to Planner's export module (PDF and DOCX), once
    pushed.
-4. **Nice-to-haves:** scale detection from a known object in the photo (a tape
+5. **Nice-to-haves:** scale detection from a known object in the photo (a tape
    measure, a 4x8 sheet, a door), a saved projects list (localStorage), a
    shareable plan link, and a materials price list per supplier that James can
    edit.
