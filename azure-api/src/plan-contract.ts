@@ -10,7 +10,7 @@ export const structureTypes = ['shed','deck','cabin','garage'] as const;
 export const planSchema = z.object({
   title:z.string().min(1).max(120),
   structureType:z.enum(structureTypes),
-  photoReadings:z.array(z.object({index:z.number().int().min(1).max(5),reading:z.string().max(400)})).max(5),
+  photoReadings:z.array(z.object({index:z.number().int().min(1).max(10),reading:z.string().max(400)})).max(10),
   siteNotes:z.string().max(800),
   dimensions:z.object({widthFt:z.number().positive().max(120),lengthFt:z.number().positive().max(120),wallHeightFt:z.number().positive().max(40),roof:z.string().max(80)}),
   rooms:z.array(z.object({name:z.string().max(40),x:z.number().min(0).max(120),y:z.number().min(0).max(120),w:z.number().positive().max(120),h:z.number().positive().max(120)})).max(8),
@@ -18,8 +18,7 @@ export const planSchema = z.object({
   materials:z.array(z.object({item:z.string().max(80),qty:z.string().max(40),notes:z.string().max(160)})).max(16),
   steps:z.array(z.object({title:z.string().max(80),detail:z.string().max(400)})).min(1).max(10),
   warnings:z.array(z.string().max(240)).max(6),
-  costRange:z.string().max(COST_RANGE_MAX),
-});
+  costRange:z.string().max(COST_RANGE_MAX),});
 export type StructurePlan = z.infer<typeof planSchema>;
 
 export const planInputSchema = z.object({
@@ -70,6 +69,5 @@ export function validatePlan(value: unknown, input: PlanInput, imageCount: numbe
   plan.warnings=[...warnings,...plan.warnings].slice(0,6);
   const cost='Example allowance, not a quote: '+(plan.costRange || 'verify local supplier prices');
   // Trim on a word boundary rather than mid-word.
-  plan.costRange=cost.length<=COST_RANGE_MAX?cost:cost.slice(0,COST_RANGE_MAX-1).replace(/\s+\S*$/,'')+'…';
-  return planSchema.parse(plan);
+  plan.costRange=cost.length<=COST_RANGE_MAX?cost:cost.slice(0,COST_RANGE_MAX-1).replace(/\s+\S*$/,'')+'…';  return planSchema.parse(plan);
 }

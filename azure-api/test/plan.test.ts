@@ -18,6 +18,7 @@ const provider=(value:unknown=plan)=>vi.fn().mockImplementation(async()=>new Res
 const env={XAI_API_KEY:'test-only',VISION_PROVIDER:'xai'};
 
 describe('Grok frontend plan contract',()=>{
+  // Fixture = schema from Grok's bundle, updated for 10 photos and a 160-char costRange (the bundle never runs its zod check).
   it('matches every constraint of the schema extracted from the actual frontend bundle',()=>{
     // Only intentional difference: costRange raised 80 → 160 so cost lines aren't cut off.
     const ours=z.toJSONSchema(planSchema) as {properties:{costRange:{maxLength:number}}};
@@ -75,8 +76,8 @@ describe('Grok frontend plan contract',()=>{
     }
     expect(fetcher).not.toHaveBeenCalled();
   });
-  it('retains five-photo, raster, per-image and streamed body caps',async()=>{
-    for(const images of [[],Array(6).fill(image),['data:image/svg+xml;base64,AAAA']]){
+  it('retains ten-photo, raster, per-image and streamed body caps',async()=>{
+    for(const images of [[],Array(11).fill(image),['data:image/svg+xml;base64,AAAA']]){
       const result=await createPlanHandler({env})(req({...input,images}));expect(result.status).toBe(400);expect(result.jsonBody).toMatchObject({ok:false});
     }
     const big=await createPlanHandler({env})(req({...input,images:[image,'data:image/png;base64,'+'A'.repeat(MAX_IMAGE_DATA_LENGTH)]}));

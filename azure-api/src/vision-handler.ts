@@ -4,9 +4,9 @@ import type { HttpResponseInit } from '@azure/functions';
 
 /** Base64 data-URL characters per photo (≈2.1 MB of JPEG). Larger phone photos are rejected with a clear 413. */
 export const MAX_IMAGE_DATA_LENGTH = 2_800_000;
-export const MAX_PHOTOS = 5;
-/** 5 photos at the cap plus spec/notes headroom. */
-export const MAX_BODY_BYTES = 14_500_000;
+export const MAX_PHOTOS = 10;
+/** 10 photos at the cap plus spec/notes headroom. */
+export const MAX_BODY_BYTES = 29_000_000;
 const mb = (n: number) => (n / 1_000_000).toFixed(1);
 export class PayloadTooLargeError extends Error {}
 interface BodyRequest {
@@ -201,7 +201,7 @@ export function createVisionHandler<T>(task: VisionTask<T>, options: HandlerOpti
     } catch (error) {
       if (error instanceof PayloadTooLargeError) return reply({status:'error',message:error.message},413);
       if (error instanceof RequestValidationError) return reply({status:'error',message:error.message},400);
-      return reply({status:'error',message:`Send valid JSON with 1–5 JPEG/PNG data URLs, each under ${mb(MAX_IMAGE_DATA_LENGTH)} MB encoded; total request under ${mb(MAX_BODY_BYTES)} MB.`},400);
+      return reply({status:'error',message:`Send valid JSON with 1–10 JPEG/PNG data URLs, each under ${mb(MAX_IMAGE_DATA_LENGTH)} MB encoded; total request under ${mb(MAX_BODY_BYTES)} MB.`},400);
     }
     if (task.direct && !images.length) {
       if (!take('spec:'+ip,specMax)) return tooMany();
@@ -238,7 +238,7 @@ export function createVisionHandler<T>(task: VisionTask<T>, options: HandlerOpti
       };
       const response = await fetcher(`${base.href.replace(/\/$/,'')}/${xai ? 'responses' : 'chat/completions'}`,{
         method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
-        signal:AbortSignal.timeout(task.providerTimeoutMs ?? 35000),body:JSON.stringify(body),
+        signal:AbortSignal.timeout(task.providerTimeoutMs ?? 80000),body:JSON.stringify(body),
       });
       if (!response.ok) throw new Error('Provider failed.');
       const text = responseText(await readBoundedJson(response,128000),xai);

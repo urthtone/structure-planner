@@ -173,7 +173,7 @@ Set these as **Function app settings**, never frontend variables:
 | `OPENAI_API_KEY` | Optional alternative in auto mode **only when XAI_API_KEY is absent**, or explicitly choose `VISION_PROVIDER=openai`; default `gpt-4o`, Chat Completions. Production is explicitly xAI. No automatic failover after an xAI error. |
 | `ALLOWED_ORIGINS` | `https://hilltopstructures.us` (comma-separated exact origins if necessary; no wildcard, no `/planner` path). |
 | `REQUIRE_ORIGIN` | `true` (default); reject missing Origin. A trusted server client can explicitly opt out with `false`. |
-| `FUNCTIONS_REQUEST_BODY_SIZE_LIMIT` | `4500000`; host limit, in addition to streamed application validation. |
+| `FUNCTIONS_REQUEST_BODY_SIZE_LIMIT` | `9000000`; host limit, in addition to streamed application validation. |
 | `RATE_LIMIT_MAX` | `10` requests per IP/window/process by default. |
 | `RATE_LIMIT_WINDOW_SECONDS` | `600` by default. |
 | `ANALYZE_SHARED_KEY` | Optional server-to-server shared key, expected as `X-Analysis-Key`. Leave absent for direct public PWA use. |
@@ -184,8 +184,8 @@ Node runtime from its runtime configuration: do not blindly copy legacy
 `FUNCTIONS_WORKER_RUNTIME`/`FUNCTIONS_EXTENSION_VERSION` settings to Flex. Those
 local-runtime settings in `local.settings.example.json` are for Core Tools only.
 
-Request: `{ "images": ["data:image/jpeg;base64,..."] }`, 1–5 raster images, each
-at most 650,000 data-URL characters and total body at most 4,500,000 bytes. Remote
+Request: `{ "images": ["data:image/jpeg;base64,..."] }`, 1–10 raster images, each
+at most 650,000 data-URL characters and total body at most 9,000,000 bytes. Remote
 URLs and SVG are rejected. Legacy JPEG/PNG/WebP/GIF input validation is retained;
 xAI additionally requires JPEG/PNG at its provider boundary. The browser converts
 all accepted raster uploads to JPEG, including WebP/GIF, before any request.
@@ -194,8 +194,8 @@ styleHints,suggestedFoundation,notes}}`. Missing provider key:
 `{status:'not_configured',message}`. Errors use `{status:'error',message}`:
 400 invalid/oversize input, 401 optional shared auth, 403 origin, 429 rate limit,
 502 provider timeout/error/invalid JSON, 503 invalid origin configuration.
-Provider calls time out after 35 seconds and outputs are strictly validated.
-The frontend allows 45 seconds; Function timeout is 60 seconds.
+Provider calls time out after 80 seconds and outputs are strictly validated.
+The Next.js frontend allows 90 seconds; Function timeout is 120 seconds.
 
 xAI uses **`POST https://api.x.ai/v1/responses`**, `input_image.image_url` with an
 inline base64 JPEG/PNG URL, `input_text`, strict `text.format` JSON schema, and

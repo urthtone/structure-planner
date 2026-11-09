@@ -19,7 +19,7 @@ POST JSON, Content-Type application/json, Origin https://hilltopstructures.us:
 
 ```ts
 {
-  images: string[]; // 1–5 inline base64 raster data URLs
+  images: string[]; // 1–10 inline base64 raster data URLs
   structureType: 'shed' | 'deck' | 'cabin' | 'garage';
   widthFt?: number; lengthFt?: number; heightFt?: number;
   estimateSize: boolean;
@@ -80,7 +80,7 @@ body/image validation, exact-origin CORS, optional server-only key, provider
 selection, no photo logging, bounded provider response,
 `store:false` and strict xAI Responses JSON schema. `/api/plan` uses at most 6,000
 output tokens; `/api/analyze` retains 2,000. The full-plan provider budget is 50
-seconds (analysis remains 35), inside the unchanged 60-second Function limit.
+seconds (analysis remains 35), inside the 120-second Function limit.
 Grok 4.3 / grok-4.3-latest plan requests explicitly use documented reasoning
 effort `none`; other model overrides are not sent that model-specific option.
 A live 35-second timeout was reproduced; a non-reasoning valid plan required
@@ -104,7 +104,7 @@ Verify the AI setting by **name only** after deployment. No new resources needed
   or the original deterministic takeoff engine.
 - Its photo compression uses a 960-pixel edge and JPEG quality .72, allowing up to
   1,600,000 data-URL characters (and limited original-image fallback). Our retained
-  API limit is stricter: 650,000 characters per image, 4,500,000 total request bytes.
+  API limit is stricter: 650,000 characters per image, 9,000,000 total request bytes.
   Some accepted large/noisy photos can be rejected by the API. xAI accepts JPEG/PNG;
   an undecodable original WebP passed through by the UI is rejected. Retake/resize
   such photos; no original bundle changes were authorized.

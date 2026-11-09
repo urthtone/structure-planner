@@ -1,4 +1,4 @@
-export const MAX_PHOTOS = 5;
+export const MAX_PHOTOS = 10;
 export const MAX_IMAGE_DATA_LENGTH = 650_000;
 const TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
@@ -16,7 +16,7 @@ export function selectImageFiles(incoming: readonly File[], existing: number) {
       continue;
     }
     if (existing + files.length >= MAX_PHOTOS) {
-      errors.push("Maximum 5 photos; remove one before adding more.");
+      errors.push("Maximum 10 photos; remove one before adding more.");
       continue;
     }
     files.push(file);

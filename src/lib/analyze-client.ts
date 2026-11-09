@@ -8,7 +8,7 @@ export async function requestAnalysis(images: string[], endpoint: string | undef
     throw new Error('Use a public HTTPS analysis URL without credentials, query keys or fragments.');
   const response = await fetcher(url.href,{
     method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images}),
-    signal:AbortSignal.timeout(45000),credentials:'omit',cache:'no-store',
+    signal:AbortSignal.timeout(90000),credentials:'omit',cache:'no-store',
   });
   const data = await response.json();
   if (response.ok && data.status === 'ok') return {status:'ok',analysis:parseAnalysis(data.analysis)};

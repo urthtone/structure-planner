@@ -27,7 +27,7 @@ describe('Azure photo analysis',()=>{
     expect(JSON.parse(fetcher.mock.calls[0][1].body).model).toBe('custom-vision');
   });
   it('rejects non-images, too many images and oversized streams',async()=>{
-    for(const images of [[],Array(6).fill(image),['https://example.test/a.png'],['data:image/svg+xml;base64,AAAA']]) {
+    for(const images of [[],Array(11).fill(image),['https://example.test/a.png'],['data:image/svg+xml;base64,AAAA']]) {
       expect((await createAnalyzeHandler({env:{}})(req(images))).status).toBe(400);
     }
     // A ~2 MB phone photo is now accepted; anything over the per-photo cap gets a clear 413.
