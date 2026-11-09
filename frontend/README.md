@@ -1,6 +1,6 @@
-# Live planner source
+# Fab-Planner source
 
-Vite app for https://hilltopstructures.us/planner/.
+Vite app branded Fab-Planner. The URL stays https://hilltopstructures.us/planner/.
 `frontend/live-build/` is the built upload. This folder is the source.
 
 ```bash

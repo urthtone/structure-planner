@@ -1,7 +1,7 @@
 {
-  "name": "Hilltop Structures Planner",
-  "short_name": "Planner",
-  "description": "Draft a shed, deck, cabin, or garage plan from up to ten photos.",
+  "name": "Fab-Planner",
+  "short_name": "Fab-Planner",
+  "description": "Draft a building or welding plan from up to ten photos.",
   "start_url": "/planner/",
   "scope": "/planner/",
   "display": "standalone",

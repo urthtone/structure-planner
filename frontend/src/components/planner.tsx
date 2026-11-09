@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { Camera, ImagePlus, Printer, RotateCcw, X } from "lucide-react";
 import { FloorSheet } from "@/components/floor-sheet";
 import { FrameSheet } from "@/components/frame-sheet";
+import { WeldSheet } from "@/components/weld-sheet";
+import { PROFILES, requestFab, WELD_CHOICES, type FabView, type WeldChoice } from "@/lib/fab";
 import { requestPlan } from "@/lib/request-plan";
 import {
   fallbackPlan,
@@ -15,6 +17,7 @@ import {
 import { fileToShot, roomFor, type Shot } from "@/lib/photos";
 
 type Stage = "photos" | "details" | "plan";
+type Family = "building" | "welding";
 
 const TYPE_COPY: Record<StructureType, string> = {
   shed: "Storage shed",
@@ -37,6 +40,13 @@ export function Planner() {
   const [shots, setShots] = useState<Shot[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [structureType, setStructureType] = useState<StructureType>("shed");
+  const [family, setFamily] = useState<Family>("building");
+  const [weldChoice, setWeldChoice] = useState<WeldChoice>("blind");
+  const [profileId, setProfileId] = useState<string>(PROFILES[0].id);
+  const [stickFt, setStickFt] = useState<20 | 24>(20);
+  const [kerf, setKerf] = useState("0.125");
+  const [gateMode, setGateMode] = useState<"gate" | "fence">("gate");
+  const [fabView, setFabView] = useState<FabView | null>(null);
   const [width, setWidth] = useState("10");
   const [length, setLength] = useState("12");
   const [height, setHeight] = useState("8");
@@ -104,19 +114,47 @@ export function Planner() {
     setPlanNote(null);
     const brief = currentBrief();
     try {
-      const result = await requestPlan(brief);
-      if (result.ok) {
-        setPlan(result.plan);
-        setPlanNote(null);
-        setStage("plan");
-      } else {
+      if (family === "welding") {
+        const kerfIn = Number(kerf);
+        const result = await requestFab({
+          choice: weldChoice,
+          images: brief.images,
+          widthFt: brief.widthFt,
+          lengthFt: brief.lengthFt,
+          heightFt: brief.heightFt,
+          notes: brief.notes,
+          profileId,
+          stickFt,
+          kerfIn: Number.isFinite(kerfIn) && kerfIn >= 0 ? kerfIn : 0.125,
+          gateMode,
+        });
         setPlan(null);
-        setPlanNote(result.error);
-        setStage("details");
+        if (result.kind === "error") {
+          setFabView(null);
+          setPlanNote(result.message);
+          setStage("details");
+        } else {
+          setFabView(result.view);
+          setPlanNote(result.kind === "waiting" ? result.view.message : null);
+          setStage("plan");
+        }
+      } else {
+        const result = await requestPlan(brief);
+        setFabView(null);
+        if (result.ok) {
+          setPlan(result.plan);
+          setPlanNote(null);
+          setStage("plan");
+        } else {
+          setPlan(null);
+          setPlanNote(result.error);
+          setStage("details");
+        }
       }
     } catch {
       setPlan(null);
-      setPlanNote("Could not reach the photo reader.");
+      setFabView(null);
+      setPlanNote(family === "welding" ? "Could not reach the shop reader." : "Could not reach the photo reader.");
       setStage("details");
     } finally {
       setBusy(false);
@@ -127,6 +165,7 @@ export function Planner() {
     setStage("photos");
     setShots([]);
     setPlan(null);
+    setFabView(null);
     setPlanNote(null);
     setNotice(null);
   }
@@ -138,9 +177,9 @@ export function Planner() {
           <a href="https://hilltopstructures.us/" className="text-sm font-semibold tracking-wide text-cedar uppercase">
             Hilltop Structures
           </a>
-          <h1 className="mt-1 text-3xl leading-tight sm:text-4xl">Plans from the photos you take</h1>
+          <h1 className="mt-1 text-3xl leading-tight sm:text-4xl">Fab-Planner</h1>
           <p className="mt-2 max-w-prose text-sm text-muted">
-            Open this page in your phone browser at hilltopstructures.us/planner. Nothing to install.
+            Plans from the photos you take. Open this page in your phone browser at hilltopstructures.us/planner. Nothing to install.
           </p>
         </div>
       </header>
@@ -264,22 +303,68 @@ export function Planner() {
           <div>
             <h2 className="text-2xl">What are you building?</h2>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              {STRUCTURES.map((type) => {
-                const selected = structureType === type;
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => setStructureType(type)}
-                    className={`min-h-11 rounded-xl border px-3 py-3 text-left ${
-                      selected ? "border-cedar bg-cedar-soft" : "border-line bg-card"
-                    }`}
-                  >
-                    <span className="block font-semibold">{TYPE_COPY[type]}</span>
-                  </button>
-                );
-              })}
+              {(
+                [
+                  ["building", "Building"],
+                  ["welding", "Welding"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={family === id}
+                  onClick={() => {
+                    setFamily(id);
+                    setPlanNote(null);
+                  }}
+                  className={`min-h-11 rounded-xl border px-3 py-3 text-left font-semibold ${
+                    family === id ? "border-cedar bg-cedar-soft" : "border-line bg-card"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {family === "building"
+                ? STRUCTURES.map((type) => {
+                    const selected = structureType === type;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => setStructureType(type)}
+                        className={`min-h-11 rounded-xl border px-3 py-3 text-left ${
+                          selected ? "border-cedar bg-cedar-soft" : "border-line bg-card"
+                        }`}
+                      >
+                        <span className="block font-semibold">{TYPE_COPY[type]}</span>
+                      </button>
+                    );
+                  })
+                : WELD_CHOICES.map((type) => {
+                    const selected = weldChoice === type.id;
+                    return (
+                      <button
+                        key={type.id}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => {
+                          setWeldChoice(type.id);
+                          setProfileId(type.profile);
+                          setWidth(type.width);
+                          setLength(type.length);
+                          setHeight(type.height);
+                        }}
+                        className={`min-h-11 rounded-xl border px-3 py-3 text-left ${
+                          selected ? "border-cedar bg-cedar-soft" : "border-line bg-card"
+                        }`}
+                      >
+                        <span className="block font-semibold">{type.label}</span>
+                      </button>
+                    );
+                  })}
             </div>
           </div>
 
@@ -316,6 +401,69 @@ export function Planner() {
             </div>
           </fieldset>
 
+          {family === "welding" && (
+            <div className="space-y-3">
+              <h2 className="text-2xl">Stock</h2>
+              <label className="block text-sm text-muted">
+                Profile
+                <select
+                  value={profileId}
+                  onChange={(event) => setProfileId(event.target.value)}
+                  className="mt-1 min-h-11 w-full rounded-lg border border-line bg-card px-3 text-ink"
+                >
+                  {PROFILES.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-sm text-muted">
+                  Stick length
+                  <select
+                    value={stickFt}
+                    onChange={(event) => setStickFt(Number(event.target.value) === 24 ? 24 : 20)}
+                    className="mt-1 min-h-11 w-full rounded-lg border border-line bg-card px-3 text-ink"
+                  >
+                    <option value={20}>20 ft</option>
+                    <option value={24}>24 ft</option>
+                  </select>
+                </label>
+                <label className="block text-sm text-muted">
+                  Kerf (in)
+                  <input
+                    inputMode="decimal"
+                    value={kerf}
+                    onChange={(event) => setKerf(event.target.value)}
+                    className="mt-1 min-h-11 w-full rounded-lg border border-line bg-card px-3 text-ink tabular-nums"
+                  />
+                </label>
+              </div>
+              {weldChoice === "gate" && (
+                <div className="grid grid-cols-2 gap-3">
+                  {(
+                    [
+                      ["gate", "Gate"],
+                      ["fence", "Fence"],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={gateMode === id}
+                      onClick={() => setGateMode(id)}
+                      className={`min-h-11 rounded-lg border ${gateMode === id ? "border-cedar bg-cedar-soft" : "border-line bg-card"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {family === "building" && (
           <div>
             <h2 className="text-2xl">Material</h2>
             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -335,6 +483,7 @@ export function Planner() {
               })}
             </div>
           </div>
+          )}
 
           <label className="block text-sm text-muted">
             Anything else — slope, snow, budget, doors, windows
@@ -366,11 +515,12 @@ export function Planner() {
               {busy ? "Reading photos…" : planNote ? "Try again" : "Draft the plan"}
             </button>
           </div>
-          {planNote && (
+          {planNote && family === "building" && (
             <button
               type="button"
               onClick={() => {
                 setPlan(fallbackPlan(currentBrief(), shots.length));
+                setFabView(null);
                 setPlanNote("This is the framing takeoff from your measurements, not a reading of the photos.");
                 setStage("plan");
               }}
@@ -382,7 +532,22 @@ export function Planner() {
         </section>
       )}
 
-      {stage === "plan" && plan && (
+      {stage === "plan" && family === "welding" && fabView && (
+        <section className="space-y-6">
+          <WeldSheet view={fabView} />
+          <div className="no-print grid grid-cols-2 gap-3">
+            <button type="button" onClick={() => setStage("details")} className="flex min-h-11 items-center justify-center rounded-lg border border-line bg-card">
+              Back
+            </button>
+            <button type="button" onClick={reset} className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-ink text-paper">
+              <RotateCcw className="size-4" aria-hidden="true" />
+              Start over
+            </button>
+          </div>
+        </section>
+      )}
+
+      {stage === "plan" && family === "building" && plan && (
         <section className="space-y-6">
           {busy && <p className="text-sm text-muted">Reading the photos and drafting the sheet…</p>}
           {planNote && (
