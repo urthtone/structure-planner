@@ -19,6 +19,25 @@ being added now.
 - **Repo:** https://github.com/urthtone/structure-planner. Work from branch
   `feature/static-azure-api`, never from `main`.
 
+## Bluehost layout and work storage (as of November 9, 2026)
+
+Account home is `/home2/conniew7`. The live site is Hilltop Construction /
+hilltopstructures.us.
+
+**Live planner files** are in `public_html/website_98d9e671/planner/`:
+
+- `index.html` — current 10-photo build. It loads `/planner/assets/bluehost-10photos.js` and `/planner/config.js?v=2`.
+- `assets/bluehost-10photos.js` — 10-photo frontend bundle. Leave older `bluehost-*.js` files in place.
+- `config.js` — sets `window.HILLTOP_PLAN_API` to the live `/api/plan` URL. **Do not overwrite or replace this file.** Cloudflare caches it for a day; `index.html` uses `?v=2` to get past a previously cached blank copy. If the photo reader looks disconnected, hard-refresh or bump the query string.
+- Leave the CSS and `favicon.svg` alone unless you are intentionally updating them.
+- There is also a nested `planner/planner/` subfolder. Do not upload into that by mistake.
+
+`curl` of the live site often hits a Cloudflare challenge; check files in a browser or in File Manager.
+
+**Work storage:** `/home2/conniew7/planner-work/` is a sibling of `public_html`, so it is not web-served and needs no `.htaccess`. Use this folder for zips, drafts, and other working files. A copy of `planner-10photos.zip` is already there. If you ever cannot create a sibling of `public_html`, use `public_html/website_98d9e671/_planner_work` with a deny-all `.htaccess` instead — do not leave work files in the public `planner/` folder.
+
+The canonical 10-photo live-build files in this repo are under `frontend/live-build/`. Upload `index.html` and the new JS only; never overwrite live `config.js`.
+
 ## Two frontends (important)
 
 1. **The live site is Grok's prebuilt Vite/React app.** Only the build output is
