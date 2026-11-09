@@ -1,15 +1,9 @@
-# Live Hilltop planner build (10 photos)
+# Built live planner
 
-This is a patched production build of Grok's Vite frontend. The original
-source is not in this repo yet. Planner raised the photo cap from 5 to 10
-in the compiled bundle and pointed `index.html` at
-`assets/bluehost-10photos.js` so Cloudflare will not serve the old file.
+Upload with `scripts/safe-deploy.sh` from `/home2/conniew7/planner-work`.
+That script copies `index.html`, `assets/`, `sw.js`, `manifest.webmanifest`,
+and `.htaccess`. It does not copy `config.js`.
 
-To update https://hilltopstructures.us/planner/, upload into
-`public_html/website_98d9e671/planner`:
-
-- `index.html` (replace)
-- `assets/bluehost-10photos.js` (new file; leave the old hashed JS in place)
-- leave the live `config.js` and CSS/favicon as they are unless they are missing
-
-`index.html` already loads `/planner/config.js?v=2`.
+Do not upload into `planner/planner/`.
+Do not put this folder in the public `planner/` directory; keep the zip in
+`/home2/conniew7/planner-work/`.
