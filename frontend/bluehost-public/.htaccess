@@ -13,6 +13,7 @@ Options -Indexes
     Header set Cache-Control "public, max-age=604800"
   </FilesMatch>
   <FilesMatch "^(index\.html|config\.js|sw\.js|manifest\.webmanifest)$">
+    Header unset Cache-Control
     Header set Cache-Control "no-cache, no-store, must-revalidate"
   </FilesMatch>
 </IfModule>
@@ -22,5 +23,6 @@ Options -Indexes
   RewriteBase /planner/
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} !\.[A-Za-z0-9]+$
   RewriteRule . /planner/index.html [L]
 </IfModule>
