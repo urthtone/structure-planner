@@ -1,0 +1,19 @@
+{
+  "bundle": "bluehost-BoaV2Lvu.js",
+  "sha256": "92db4e8128a7b7fac52425a62de4421d7eb0a373351262179c13120fcb9ccc86",
+  "start": 309392,
+  "end": 310196,
+  "bindings": {
+    "Ps": "z.object",
+    "es": "z.string",
+    "ws": "z.number",
+    "Bs": "z.enum",
+    "Ms": "z.array",
+    "uc": [
+      "shed",
+      "deck",
+      "cabin",
+      "garage"
+    ]
+  }
+}

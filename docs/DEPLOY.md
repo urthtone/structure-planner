@@ -5,7 +5,18 @@
 files; it does not run Next.js, Node or the API. No Bluehost access has been used.
 No sign-in, code-signing, native-wrapper or app-store setup is required.
 
-## 1. Build and upload the frontend
+## Supplied Grok frontend (current requested upload)
+
+James subsequently supplied a different Vite/React build. Use
+**`/workspace/planner-grok-upload.zip`** for that UI, not the original Next/PWA
+archive. Its runtime `config.js` points to
+`https://hilltop-planner-api-da467d.azurewebsites.net/api/plan`.
+See [GROK_FRONTEND.md](GROK_FRONTEND.md) for the exact contract, upload layout and
+important differences (including no PWA/Apache files and an unused client schema).
+`/api/analyze` remains available for the original Next/PWA below. Both routes share
+the existing limits and settings; XAI_API_KEY remains only in Function settings.
+
+## 1. Build and upload the original Next/PWA frontend
 
 Use Node 22 and npm. From the repository root:
 
@@ -147,7 +158,7 @@ limiter are **not** a hard total-spend cap.
 ## 3. Function app settings and contract
 
 `azure-api/` is a standalone Node/TypeScript Functions v4 app; compiled entry point
-`dist/functions.js` registers **POST `/api/analyze`** plus OPTIONS. The pure shared
+`dist/functions.js` registers **POST `/api/analyze` and `/api/plan`** plus OPTIONS. The pure shared
 JSON contract in `azure-api/src/contract.ts` is also used by the frontend. Root
 `src/app/api` is removed so Next can export static files.
 

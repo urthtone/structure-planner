@@ -1,6 +1,6 @@
 # Planner Azure deployment record
 
-Status: Deployed and verified. xAI key activated securely; real single-image structured result and CORS verified.
+Status: Deployed and API-verified for /api/plan; supplied frontend browser-render check pending.
 Recipe: Azure CLI + native ARM template; Azure Prepare -> Azure Validate -> Azure Deploy completed.
 
 ## 1. Approval and scope
@@ -128,3 +128,41 @@ planner/ directory. No Bluehost upload/access performed.
 - Fresh lint, 31 unit tests (19 frontend/tooling + 12 Function), Function build,
   Node 22 Function tests, 4 workflow browser tests, static export and 2 production
   PWA tests passed. Fresh export uses the unchanged live endpoint.
+
+
+## Grok frontend contract adaptation (code-only deployment)
+- Approved scope: preserve existing resources/settings; add `/api/plan` and retain `/api/analyze`. Never reapply the bootstrap template.
+- Extracted request/schema from James's Vite bundle; keep the reviewed 804-character Zod expression as an independent test fixture.
+- Implement server-side schema, dimension/layout bounds and photo-index validation; label AI drafts and assumed dimensions explicitly. Share the existing process-local limiter across both routes.
+- Run API/root tests, lint and builds, package Node 22 production dependencies, then ZIP-deploy code only. Verify XAI_API_KEY by setting name only.
+- Smoke-test production-only CORS and a real photo request, including the original frontend rendering. Serve the unchanged frontend locally using a production-origin mapping in an isolated browser (no Bluehost requests).
+- Release ZIP changes only config.js; document the supplied build's missing PWA/Apache configuration and unused client schema. Commit locally, no push.
+
+### Code-only validation proof — November 8, 2026, 6:04 PM CST
+- npm run lint: passed. npm test: 19 root + 29 API tests passed.
+- Node 22 isolated API tests: 29 passed; Node 22 TypeScript API build passed.
+- Existing Next static export: passed with live /api/analyze URL; 28 precache assets.
+- az account show: approved subscription matched; group location eastus2.
+- az functionapp cors show: only https://hilltopstructures.us, no credentials.
+- Name-only setting check: XAI_API_KEY present; no values read/printed.
+- Fresh production package includes compiled dist, host/package files and Node 22 production dependencies; npm audit zero vulnerabilities, ZIP CRC passed.
+- No infrastructure changes; prior ARM validation/what-if proof remains applicable. Bicep/Docker/ACR/MI/RBAC not used; no role or policy changes. Do not rerun bootstrap provisioning.
+- Approval already names the existing app/group/subscription/region and code-only deployment. No AZD/new environment needed.
+
+### Latency regression investigation / validation
+- First live plan hit 502 at 35 seconds. Local provider-boundary instrumentation reproduced TimeoutError at 35,007 ms; connectivity without a key returned 401 promptly. No photos, keys or provider contents logged.
+- xAI Grok 4.3 docs confirm reasoning none is supported. An isolated non-reasoning full-plan request returned valid JSON: 746 output tokens, zero reasoning tokens, about 32 seconds. A 35-second budget is too close to actual latency.
+- Added red/green tests: plan requests use reasoning none only for documented Grok 4.3 IDs and a 50-second provider deadline; unknown model overrides remain untouched. Original analyze provider deadline stays 35 seconds, Function host limit stays 60 seconds. Image/body/quota limits and all settings unchanged.
+- Fresh lint and 51 unit tests (19 root + 32 API) passed; isolated Node 22 API build/tests passed. Production ZIP refreshed from that build; CRC verified.
+- Validated at November 08, 2026, 06:10 PM CST. Ready for code-only corrective deployment.
+
+### Corrective deployment and live proof — November 8, 2026, CST
+- Code-only config-zip deployment exited 0 with trigger sync and host health check; no ARM/provisioning/settings update.
+- 6:12 PM CST: real allowed-origin OPTIONS 204; denied origin POST 403 with no CORS; legacy /api/analyze invalid request 400 with its original envelope.
+- One real synthetic-image /api/plan POST: 200 / ok:true in 10,698 ms; validated using the exact extracted frontend Zod expression. Dimensions 10×12×8, one indexed photo reading, 16 material entries, six build steps. No response contents/photos/keys logged. Evidence: .azure/grok-plan-smoke.json.
+- CLI post-deployment projection confirmed XAI_API_KEY remains present by name only.
+- Fresh final Next static build, Function TypeScript build, lint, 51 unit tests and diff whitespace check passed. Production Node 22 tests/build also passed.
+- Supplied frontend served locally under /planner/: index and four linked local assets return 200 with appropriate JS MIME; config contains live /api/plan. ZIP CRC passed and all files except config.js are byte-identical to the supplied build. Artifact evidence: .azure/grok-upload-artifact.json.
+- Browser rendering is NOT verified in this executor: no browser/subagent tool is available, and the desktop skill forbids Shell-driven browser automation. No Playwright browser run claimed. Parent can perform the remaining photo/render check at http://127.0.0.1:3103/planner/ using the local-only origin test proxy; unmodified static preview is at http://127.0.0.1:3104/planner/. No Bluehost requests were made.
+- Automated independent reviewer subagent is likewise unavailable; local source/diff review and tests were used.
+- Debugging involved three timed-out provider attempts (one deployed, two local) and one successful local diagnostic before the final successful deployed inference. Timeouts can still incur provider charges. No retry loop or automatic provider failover was added.

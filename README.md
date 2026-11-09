@@ -59,3 +59,14 @@ The pure TypeScript engine is in `src/lib/planning.ts`, with unit tests beside i
 ## Installable PWA
 
 The planner is now installable with a manifest, placeholder icons and a versioned production offline shell. Manual estimates work offline after one online visit; photo analysis still needs a connection. See [PWA.md](docs/PWA.md) for installation, update behavior and checks. No sign-in or signing setup is required.
+
+## Supplied Grok/Vite frontend
+
+The separately supplied prebuilt frontend uses the additional Azure Function
+`POST /api/plan` with `{ok:true,plan}` / `{ok:false,error}` responses. Its runtime
+`config.js` (not a Next build variable) points to the public endpoint. See
+[docs/GROK_FRONTEND.md](docs/GROK_FRONTEND.md) for the exact extracted schema,
+config-only upload archive and limitations. This AI concept route is separate
+from the original wizard's deterministic takeoff engine; quantities/costs are
+illustrative, not engineered drawings or supplier quotes. `/api/analyze` remains
+backward compatible. Do not reapply the Azure bootstrap template for code updates.
