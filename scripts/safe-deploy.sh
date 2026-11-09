@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Sync approved Structure Planner frontend files to the live Bluehost folder.
-# Never overwrites config.js, .htaccess, or .env files.
+# Never overwrites config.js or .env files. It does update .htaccess from the source.
 # Default is a dry run. Pass --live to actually copy.
 #
 # Run this on Bluehost (SSH or cPanel Terminal), not from a Windows checkout
@@ -99,13 +99,13 @@ rsync "${RSYNC_FLAGS[@]}" \
   --exclude='**/config.js' \
   --exclude='config.example.js' \
   --exclude='.env*' \
-  --exclude='.htaccess' \
   --exclude='README.md' \
   --exclude='*.zip' \
   --include='index.html' \
   --include='favicon.svg' \
   --include='manifest.webmanifest' \
   --include='sw.js' \
+  --include='.htaccess' \
   --include='assets/' \
   --include='assets/***' \
   --exclude='*' \

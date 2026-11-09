@@ -1,0 +1,18 @@
+{
+  "name": "Hilltop Structures Planner",
+  "short_name": "Planner",
+  "description": "Draft a shed, deck, cabin, or garage plan from up to ten photos.",
+  "start_url": "/planner/",
+  "scope": "/planner/",
+  "display": "standalone",
+  "background_color": "#f3efe6",
+  "theme_color": "#f3efe6",
+  "icons": [
+    {
+      "src": "/planner/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
