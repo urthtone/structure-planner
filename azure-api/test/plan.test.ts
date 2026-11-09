@@ -18,6 +18,7 @@ const provider=(value:unknown=plan)=>vi.fn().mockImplementation(async()=>new Res
 const env={XAI_API_KEY:'test-only',VISION_PROVIDER:'xai'};
 
 describe('Grok frontend plan contract',()=>{
+  // Fixture = schema from Grok's bundle, updated for 10 photos and a 160-char costRange (the bundle never runs its zod check).
   it('matches every constraint of the schema extracted from the actual frontend bundle',()=>{
     expect(z.toJSONSchema(planSchema)).toEqual(z.toJSONSchema(originalSchema));
     expect(originalSchema.safeParse(plan).success).toBe(true);
@@ -70,11 +71,11 @@ describe('Grok frontend plan contract',()=>{
     }
     expect(fetcher).not.toHaveBeenCalled();
   });
-  it('retains five-photo, raster, per-image and streamed body caps',async()=>{
-    for(const images of [[],Array(6).fill(image),['data:image/svg+xml;base64,AAAA'],['data:image/png;base64,'+'A'.repeat(650000)]]){
+  it('retains ten-photo, raster, per-image and streamed body caps',async()=>{
+    for(const images of [[],Array(11).fill(image),['data:image/svg+xml;base64,AAAA'],['data:image/png;base64,'+'A'.repeat(650000)]]){
       const result=await createPlanHandler({env})(req({...input,images}));expect(result.status).toBe(400);expect(result.jsonBody).toMatchObject({ok:false});
     }
-    const result=await createPlanHandler({env})(req(input,{'content-length':'4500001'}));expect(result.status).toBe(400);
+    const result=await createPlanHandler({env})(req(input,{'content-length':'9000001'}));expect(result.status).toBe(400);
   });
   it('requires exactly one valid reading for each submitted photo',async()=>{
     for(const photoReadings of [[],[{index:2,reading:'Wrong image.'}],[plan.photoReadings[0],plan.photoReadings[0]]]){

@@ -184,7 +184,7 @@ Node runtime from its runtime configuration: do not blindly copy legacy
 `FUNCTIONS_WORKER_RUNTIME`/`FUNCTIONS_EXTENSION_VERSION` settings to Flex. Those
 local-runtime settings in `local.settings.example.json` are for Core Tools only.
 
-Request: `{ "images": ["data:image/jpeg;base64,..."] }`, 1–5 raster images, each
+Request: `{ "images": ["data:image/jpeg;base64,..."] }`, 1–10 raster images, each
 at most 650,000 data-URL characters and total body at most 4,500,000 bytes. Remote
 URLs and SVG are rejected. Legacy JPEG/PNG/WebP/GIF input validation is retained;
 xAI additionally requires JPEG/PNG at its provider boundary. The browser converts

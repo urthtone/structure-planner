@@ -3,11 +3,11 @@ import { selectImageFiles, MAX_PHOTOS } from "./photos";
 
 const image = (type = "image/jpeg") => ({ type, size: 1000 }) as File;
 describe("photo intake", () => {
-  it("caps selection at five for either input or drop", () => {
-    expect(MAX_PHOTOS).toBe(5);
-    const result = selectImageFiles([image(), image(), image()], 4);
+  it("caps selection at ten for either input or drop", () => {
+    expect(MAX_PHOTOS).toBe(10);
+    const result = selectImageFiles([image(), image(), image()], 9);
     expect(result.files).toHaveLength(1);
-    expect(result.errors.join(" ")).toContain("5");
+    expect(result.errors.join(" ")).toContain("10");
   });
   it("rejects non-images, SVG and oversized source files", () => {
     const result = selectImageFiles(
@@ -23,6 +23,6 @@ describe("photo intake", () => {
     expect(result.errors).toHaveLength(3);
   });
   it("does not accept images when already full", () => {
-    expect(selectImageFiles([image()], 5).files).toHaveLength(0);
+    expect(selectImageFiles([image()], 10).files).toHaveLength(0);
   });
 });

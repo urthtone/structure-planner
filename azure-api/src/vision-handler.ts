@@ -2,9 +2,9 @@ import { timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
 import type { HttpResponseInit } from '@azure/functions';
 
-const MAX_BODY_BYTES = 4_500_000;
+const MAX_BODY_BYTES = 9_000_000;
 const MAX_IMAGE_DATA_LENGTH = 650_000;
-const MAX_PHOTOS = 5;
+const MAX_PHOTOS = 10;
 interface BodyRequest {
   headers: { get(name: string): string | null };
   body: { getReader(): {
@@ -176,7 +176,7 @@ export function createVisionHandler<T>(task: VisionTask<T>, options: HandlerOpti
       input = task.parseInput(body);
     } catch (error) {
       if (error instanceof RequestValidationError) return reply({status:'error',message:error.message},400);
-      return reply({status:'error',message:'Send 1–5 JPEG/PNG/WebP/GIF data URLs, each under 650 KB; total request under 4.5 MB.'},400);
+      return reply({status:'error',message:'Send 1–10 JPEG/PNG/WebP/GIF data URLs, each under 650 KB; total request under 9 MB.'},400);
     }
     if (env.VISION_PROVIDER && !['xai','openai','auto'].includes(env.VISION_PROVIDER))
       return reply({status:'error',message:'Invalid photo-analysis provider configuration.'},503);

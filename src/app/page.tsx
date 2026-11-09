@@ -209,7 +209,7 @@ export default function Home() {
               </h2>
             </div>
             <p>
-              Optional site or inspiration photos. Up to five raster images, 20
+              Optional site or inspiration photos. Up to ten raster images, 20
               MB each before compression. Photos stay in memory unless you
               choose analysis.
             </p>

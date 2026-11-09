@@ -26,11 +26,11 @@ describe('Azure photo analysis',()=>{
     expect(JSON.parse(fetcher.mock.calls[0][1].body).model).toBe('custom-vision');
   });
   it('rejects non-images, too many images and oversized streams',async()=>{
-    for(const images of [[],Array(6).fill(image),['https://example.test/a.png'],['data:image/svg+xml;base64,AAAA'],['data:image/jpeg;base64,'+'A'.repeat(650000)]]) {
+    for(const images of [[],Array(11).fill(image),['https://example.test/a.png'],['data:image/svg+xml;base64,AAAA'],['data:image/jpeg;base64,'+'A'.repeat(650000)]]) {
       expect((await createAnalyzeHandler({env:{}})(req(images))).status).toBe(400);
     }
-    expect((await createAnalyzeHandler({env:{}})(req([image],{'content-length':'4500001'}))).status).toBe(400);
-    const big = new Request('https://example.test/api/analyze',{method:'POST',headers:{origin:'https://hilltopstructures.us'},body:'a'.repeat(4500001)});
+    expect((await createAnalyzeHandler({env:{}})(req([image],{'content-length':'9000001'}))).status).toBe(400);
+    const big = new Request('https://example.test/api/analyze',{method:'POST',headers:{origin:'https://hilltopstructures.us'},body:'a'.repeat(9000001)});
     expect((await createAnalyzeHandler({env:{}})(big)).status).toBe(400);
   });
   it('restricts origins, handles preflight and can require a server-to-server shared key',async()=>{

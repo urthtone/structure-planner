@@ -6,7 +6,7 @@ change anything.
 
 ## What this is
 
-Structure Planner turns up to 5 photos plus a few answers into a build plan for
+Structure Planner turns up to 10 photos plus a few answers into a build plan for
 small structures (sheds, decks, cabins, garages). Steel and welding projects are
 being added now.
 
@@ -36,19 +36,26 @@ under `frontend/` on a branch of your own, so everyone can work on one codebase.
 
 - `POST /api/plan` is the contract Grok's frontend uses. The full request and
   response shapes are in `docs/GROK_FRONTEND.md`. The request is
-  `{images: string[] (1-5 base64 data URLs), structureType, widthFt?, lengthFt?,
+  `{images: string[] (1-10 base64 data URLs), structureType, widthFt?, lengthFt?,
   heightFt?, estimateSize, material, notes}`. The response is
   `{ok:true, plan}` or `{ok:false, error}`.
 - `POST /api/analyze` is the original contract for the Next app
   (`azure-api/src/contract.ts`).
 - CORS only allows `https://hilltopstructures.us`. Requests are rate limited.
-- A real request with 5 phone photos, each shrunk to about 1280px and about
+- A real request with 10 phone photos, each shrunk to about 1280px and about
   120 KB, comes back in about 20 seconds.
 
-## In progress by Planner (don't duplicate)
+## Planner's role
 
-These are on local branch `feature/welding-plans`, which will be pushed when
-ready:
+Planner is the project manager: task list, PR review, live-site testing, Azure
+and Bluehost deploys. Gemini and Grok do the coding. Open PRs into
+`feature/static-azure-api` (or `feature/welding-plans` for fab work) and put
+your name on the task in the PR description.
+
+## Welding work, handed off (finish this)
+
+Planner stopped mid-build so you can take it. The WIP is on branch
+`feature/welding-plans` (commit `bf3ee84`). Pick it up from there; do not start over.
 
 - A **welding and fabrication engine** for box blinds and steel sheds, trailers,
   gates and fences, and carports and steel buildings. It produces:
