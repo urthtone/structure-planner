@@ -32,6 +32,9 @@ Current live upload (10-photo Vite build from `frontend/live-build/`):
 
 **Work storage:** `/home2/conniew7/planner-work/` is a sibling of `public_html`, so it is not web-served. A copy of `planner-10photos.zip` is already there. Prefer this folder for drafts and zips. Fallback if needed: `public_html/website_98d9e671/_planner_work` with a deny-all `.htaccess`.
 
+**Safe deploy script:** `scripts/safe-deploy.sh`. Run it on Bluehost (SSH or cPanel Terminal). It dry-runs by default; pass `--live` to copy. The destination is hard-coded to `/home2/conniew7/public_html/website_98d9e671/planner` — never `public_html/planner`. It backups `config.js` to `/home2/conniew7/.config-backups/`, copies only an allowlist of frontend files, and restores `config.js` if it changes. Do not rsync all of `planner-work/` to the web root.
+
+
 ## 1. Build and upload the original Next/PWA frontend
 
 Use Node 22 and npm. From the repository root:
